@@ -3164,7 +3164,12 @@ std::chrono::steady_clock::duration MGLDurationInSeconds(float duration)
     self.userLocationAnnotationView.haloLayer.hidden = ! CLLocationCoordinate2DIsValid(self.userLocation.coordinate) ||
         newLocation.horizontalAccuracy > 10;
 
-    [self updateUserLocationAnnotationView];
+    NSTimeInterval duration = MGLAnimationDuration;
+    if (oldLocation && ! CGPointEqualToPoint(self.userLocationAnnotationView.center, CGPointZero))
+    {
+        duration = MAX([newLocation.timestamp timeIntervalSinceDate:oldLocation.timestamp], MGLUserLocationAnimationDuration);
+    }
+    [self updateUserLocationAnnotationViewAnimatedWithDuration:duration];
 }
 
 - (BOOL)locationManagerShouldDisplayHeadingCalibration:(CLLocationManager *)manager
@@ -3423,6 +3428,11 @@ std::chrono::steady_clock::duration MGLDurationInSeconds(float duration)
 
 - (void)updateUserLocationAnnotationView
 {
+    [self updateUserLocationAnnotationViewAnimatedWithDuration:0];
+}
+
+- (void)updateUserLocationAnnotationViewAnimatedWithDuration:(NSTimeInterval)duration
+{
     MGLUserLocationAnnotationView *annotationView = self.userLocationAnnotationView;
     if ( ! CLLocationCoordinate2DIsValid(self.userLocation.coordinate)) {
         annotationView.layer.hidden = YES;
@@ -3445,7 +3455,9 @@ std::chrono::steady_clock::duration MGLDurationInSeconds(float duration)
     if (CGRectContainsPoint(CGRectInset(self.bounds, -MGLAnnotationUpdateViewportOutset.width,
         -MGLAnnotationUpdateViewportOutset.height), userPoint))
     {
-        annotationView.center = userPoint;
+        [UIView animateWithDuration:duration delay:0 options:UIViewAnimationOptionCurveLinear animations:^{
+            annotationView.center = userPoint;
+        } completion:NULL];
         annotationView.layer.hidden = NO;
         [annotationView setupLayers];
         
