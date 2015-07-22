@@ -71,12 +71,15 @@ run-linux: linux ; (cd build/$(BUILD)-$(BUILD_VERSION)/$(BUILDTYPE) && ./mapbox-
 run-valgrind-linux: linux
 	(cd build/$(BUILD)-$(BUILD_VERSION)/$(BUILDTYPE) && valgrind --leak-check=full --suppressions=../../../scripts/valgrind.sup ./mapbox-gl)
 
-
 .PHONY: config compdb tidy
 config: ; $(RUN) config
 # Generates a compilation database with ninja for use in clang tooling
 compdb: ; $(RUN) Ninja/compdb
 tidy: ; $(RUN) tidy
+
+.PHONY: qt run-qt
+qt: ; $(RUN) Makefile/qtapp
+run-qt: qt ; (cd build/$(BUILD)-x86_64/$(BUILDTYPE) && ./qmapboxgl)
 
 .PHONY: android android-lib
 # Builds a particular android architecture.

@@ -1,5 +1,6 @@
 {
   'includes': [
+    '../qt/qmapboxgl.gypi',
     '../platform/linux/mapboxgl-app.gypi',
   ],
 
