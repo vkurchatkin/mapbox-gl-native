@@ -13,6 +13,7 @@
     ['headless_lib == "glx" and host == "linux"', { 'includes': [ 'headless-glx.gypi' ] } ],
     ['platform_lib == "osx" and host == "osx"', { 'includes': [ 'platform-osx.gypi' ] } ],
     ['platform_lib == "ios" and host == "ios"', { 'includes': [ 'platform-ios.gypi' ] } ],
+    ['platform_lib == "qt"', { 'includes': [ 'platform-qt.gypi' ] } ],
     ['platform_lib == "linux"', { 'includes': [ 'platform-linux.gypi' ] } ],
     ['platform_lib == "android" and host == "android"', { 'includes': [ 'platform-android.gypi' ] } ],
     ['http_lib == "curl"', { 'includes': [ 'http-curl.gypi' ] } ],

@@ -78,7 +78,7 @@ compdb: ; $(RUN) Ninja/compdb
 tidy: ; $(RUN) tidy
 
 .PHONY: qt run-qt
-qt: ; $(RUN) Makefile/qtapp
+qt: ; $(RUN) PLATFORM=qt Makefile/qtapp
 run-qt: qt ; (cd build/$(BUILD)-x86_64/$(BUILDTYPE) && ./qmapboxgl)
 
 .PHONY: android android-lib

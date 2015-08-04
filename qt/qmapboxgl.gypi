@@ -25,11 +25,6 @@
         'main.cpp',
         'mapwindow.cpp',
         'mapwindow.hpp',
-        '../include/mbgl/platform/qt/qmapboxgl.hpp',
-        '../platform/default/default_styles.cpp',
-        '../platform/default/log_stderr.cpp',
-        '../platform/qt/qmapboxgl.cpp',
-        '../platform/qt/qmapboxgl_p.hpp',
       ],
 
       'include_dirs': [
@@ -37,31 +32,40 @@
         '../src',
       ],
 
-      'conditions': [
-        ['OS == "linux"', {
-          'cflags_cc': [
-            '<@(opengl_cflags)',
-            '<@(qt_cflags)',
-            '-Wno-error'
-          ],
+      'variables': {
+        'cflags_cc': [
+          '<@(opengl_cflags)',
+          '<@(qt_cflags)',
+          '-Wno-error'
+        ],
+        'ldflags': [
+          '<@(opengl_ldflags)',
+          '<@(qt_ldflags)'
+        ],
+        'libraries': [
+        ],
+      },
 
-          'libraries': [
-            '<@(opengl_ldflags)',
-            '<@(qt_ldflags)'
-          ],
-        }],
+      'conditions': [
         ['OS == "mac"', {
           'xcode_settings': {
-            'OTHER_CPLUSPLUSFLAGS': [
-              '<@(qt_cflags)',
-              '-Wno-error'
-            ],
-            'OTHER_LDFLAGS': [
-              '<@(qt_ldflags)'
-            ],
+            'OTHER_CPLUSPLUSFLAGS': [ '<@(cflags_cc)' ],
           }
-        }],
+        }, {
+          'cflags_cc': [ '<@(cflags_cc)' ],
+        }]
       ],
+
+      'link_settings': {
+        'conditions': [
+          ['OS == "mac"', {
+            'libraries': [ '<@(libraries)' ],
+            'xcode_settings': { 'OTHER_LDFLAGS': [ '<@(ldflags)' ] }
+          }, {
+            'libraries': [ '<@(libraries)', '<@(ldflags)' ],
+          }]
+        ],
+      },
     },
   ],
 }
