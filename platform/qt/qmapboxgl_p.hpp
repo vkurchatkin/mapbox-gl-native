@@ -1,6 +1,8 @@
 #ifndef QMAPBOXGL_P_H
 #define QMAPBOXGL_P_H
 
+#include "qfilesource_p.hpp"
+
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/view.hpp>
 #include <mbgl/platform/qt/qmapboxgl.hpp>
@@ -40,7 +42,7 @@ public:
 
     QMapboxGL *q_ptr = nullptr;
 
-    mbgl::DefaultFileSource fileSourceObj;
+    QFileSourcePrivate fileSourceObj;
 
     mbgl::util::RunLoop loop;
     mbgl::Map mapObj;
