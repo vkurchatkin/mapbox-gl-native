@@ -13,7 +13,7 @@ class QMapboxGLPrivate;
 
 // This header follows the Qt coding style: https://wiki.qt.io/Qt_Coding_Style
 
-class QMapboxGL : public QObject
+class Q_DECL_EXPORT QMapboxGL : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(double latitude READ latitude WRITE setLatitude)

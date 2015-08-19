@@ -77,7 +77,8 @@ config: ; $(RUN) config
 compdb: ; $(RUN) Ninja/compdb
 tidy: ; $(RUN) tidy
 
-.PHONY: qt run-qt
+.PHONY: qtpackage qt run-qt
+qtpackage: ; $(RUN) PLATFORM=qt HTTP=none Makefile/qtpackage
 qt: ; $(RUN) PLATFORM=qt HTTP=none Makefile/qtapp
 run-qt: qt ; (cd build/$(BUILD)-x86_64/$(BUILDTYPE) && ./qmapboxgl)
 

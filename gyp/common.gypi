@@ -37,6 +37,7 @@
           '-Wno-error=unused-parameter',
           '-frtti',
           '-fexceptions',
+          '-fvisibility=hidden',
           '${CFLAGS}',
         ],
       }],
