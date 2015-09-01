@@ -31,7 +31,6 @@ MapContext::MapContext(View& view_, FileSource& fileSource, MapMode mode_, GLCon
       dataPtr(std::make_unique<MapData>(mode_, contextMode_, pixelRatio_)),
       data(*dataPtr),
       asyncUpdate([this] { update(); }),
-      asyncInvalidate([&view_] { view_.invalidate(); }),
       texturePool(std::make_unique<TexturePool>()) {
     assert(util::ThreadContext::currentlyOn(util::ThreadType::Map));
 
@@ -39,7 +38,6 @@ MapContext::MapContext(View& view_, FileSource& fileSource, MapMode mode_, GLCon
     util::ThreadContext::setGLObjectStore(&glObjectStore);
 
     asyncUpdate.unref();
-    asyncInvalidate.unref();
 
     view.activate();
 }
@@ -64,21 +62,6 @@ void MapContext::cleanup() {
     glObjectStore.performCleanup();
 
     view.deactivate();
-}
-
-void MapContext::pause() {
-    MBGL_CHECK_ERROR(glFinish());
-
-    view.deactivate();
-
-    std::unique_lock<std::mutex> lockPause(data.mutexPause);
-    data.paused = true;
-    data.condPause.notify_all();
-    data.condPause.wait(lockPause, [&]{ return !data.paused; });
-
-    view.activate();
-
-    asyncInvalidate.send();
 }
 
 void MapContext::triggerUpdate(const TransformState& state, const Update flags) {
@@ -186,7 +169,7 @@ void MapContext::update() {
     style->update(transformState, *texturePool);
 
     if (data.mode == MapMode::Continuous) {
-        asyncInvalidate.send();
+        view.invalidate();
     } else if (callback && style->isLoaded()) {
         renderSync(transformState, frameData);
     }
@@ -293,7 +276,7 @@ void MapContext::setSourceTileCacheSize(size_t size) {
         sourceCacheSize = size;
         if (!style) return;
         style->setSourceTileCacheSize(size);
-        asyncInvalidate.send();
+        view.invalidate();
     }
 }
 
@@ -301,7 +284,7 @@ void MapContext::onLowMemory() {
     assert(util::ThreadContext::currentlyOn(util::ThreadType::Map));
     if (!style) return;
     style->onLowMemory();
-    asyncInvalidate.send();
+    view.invalidate();
 }
     
 void MapContext::onTileDataChanged() {
