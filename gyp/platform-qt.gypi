@@ -18,6 +18,8 @@
         '../platform/default/log_stderr.cpp',
         '../platform/default/string_stdlib.cpp',
         '../platform/default/thread.cpp',
+        '../platform/qt/async_task.cpp',
+        '../platform/qt/async_task_impl.hpp',
         '../platform/qt/image.cpp',
         '../platform/qt/qfilesource_p.cpp',
         '../platform/qt/qfilesource_p.hpp',
@@ -25,6 +27,10 @@
         '../platform/qt/qmapboxgl_p.hpp',
         '../platform/qt/qsqlitecache_p.cpp',
         '../platform/qt/qsqlitecache_p.hpp',
+        '../platform/qt/run_loop.cpp',
+        '../platform/qt/run_loop_impl.hpp',
+        '../platform/qt/timer.cpp',
+        '../platform/qt/timer_impl.hpp',
       ],
 
       'variables': {
