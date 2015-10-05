@@ -91,23 +91,23 @@ double QMapboxGL::maximumZoom() const
     return d_ptr->mapObj.getMaxZoom();
 }
 
-QPointF QMapboxGL::coordinate() const
+QMapboxGL::Coordinate QMapboxGL::coordinate() const
 {
     const mbgl::LatLng& latLng = d_ptr->mapObj.getLatLng();
 
-    return QPointF(latLng.latitude, latLng.longitude);
+    return Coordinate(latLng.latitude, latLng.longitude);
 }
 
-void QMapboxGL::setCoordinate(const QPointF &coordinate_, int milliseconds)
+void QMapboxGL::setCoordinate(const Coordinate &coordinate_, int milliseconds)
 {
     d_ptr->mapObj.setLatLng(
-        { coordinate_.x(), coordinate_.y() }, std::chrono::milliseconds(milliseconds));
+        { coordinate_.first, coordinate_.second }, std::chrono::milliseconds(milliseconds));
 }
 
-void QMapboxGL::setCoordinateZoom(const QPointF &coordinate_, double zoom_, int milliseconds)
+void QMapboxGL::setCoordinateZoom(const Coordinate &coordinate_, double zoom_, int milliseconds)
 {
     d_ptr->mapObj.setLatLngZoom(
-        { coordinate_.x(), coordinate_.y() }, zoom_, std::chrono::milliseconds(milliseconds));
+        { coordinate_.first, coordinate_.second }, zoom_, std::chrono::milliseconds(milliseconds));
 }
 
 double QMapboxGL::bearing() const
@@ -198,20 +198,20 @@ void QMapboxGL::addAnnotationIcon(const QString &name, const QImage &sprite)
         std::string(reinterpret_cast<const char*>(swapped.constBits()), swapped.byteCount())));
 }
 
-QPointF QMapboxGL::pixelForCoordinate(const QPointF &coordinate_) const
+QPointF QMapboxGL::pixelForCoordinate(const Coordinate &coordinate_) const
 {
     const mbgl::vec2<double> pixel =
-        d_ptr->mapObj.pixelForLatLng({ coordinate_.x(), coordinate_.y() });
+        d_ptr->mapObj.pixelForLatLng({ coordinate_.first, coordinate_.second });
 
     return QPointF(pixel.x, d_ptr->size.height() - pixel.y);
 }
 
-QPointF QMapboxGL::coordinateForPixel(const QPointF &pixel) const
+QMapboxGL::Coordinate QMapboxGL::coordinateForPixel(const QPointF &pixel) const
 {
     const mbgl::LatLng latLng =
         d_ptr->mapObj.latLngForPixel({ pixel.x(), d_ptr->size.height() - pixel.y() });
 
-    return QPointF(latLng.latitude, latLng.longitude);
+    return Coordinate(latLng.latitude, latLng.longitude);
 }
 
 void QMapboxGL::render()

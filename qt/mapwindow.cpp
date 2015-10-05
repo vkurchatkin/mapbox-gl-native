@@ -14,7 +14,7 @@ MapWindow::MapWindow()
     m_map.setCacheDatabase("/tmp/mbgl-cache.db");
 
     // Set default location to Helsinki.
-    m_map.setCoordinateZoom(QPointF(60.170448, 24.942046), 14);
+    m_map.setCoordinateZoom(QMapboxGL::Coordinate(60.170448, 24.942046), 14);
 
     changeStyle();
 }
