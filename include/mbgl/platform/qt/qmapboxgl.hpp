@@ -131,6 +131,7 @@ public:
 
 public slots:
     void render();
+    void connectionEstablished();
 
 signals:
     void needsRendering();
