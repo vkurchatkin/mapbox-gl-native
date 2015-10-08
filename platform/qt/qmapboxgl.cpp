@@ -21,6 +21,11 @@ QMapboxGL::~QMapboxGL()
 {
 }
 
+void QMapboxGL::cycleDebugOptions()
+{
+    d_ptr->mapObj.cycleDebugOptions();
+}
+
 void QMapboxGL::setAccessToken(const QString &token)
 {
     d_ptr->fileSourceObj.setAccessToken(token);

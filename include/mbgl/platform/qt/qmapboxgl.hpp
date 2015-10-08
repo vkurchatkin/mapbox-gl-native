@@ -30,6 +30,8 @@ public:
     void setAccessToken(const QString &token);
     void setCacheDatabase(const QString &path);
 
+    void cycleDebugOptions();
+
     void setStyleJSON(const QString &);
     void setStyleURL(const QString &);
 
