@@ -26,5 +26,11 @@ function print_qt_flags {
 
     CONFIG+="    'qt_cflags%': $(quote_flags $(mason cflags qt system "QtCore QtGui QtOpenGL QtNetwork QtSql")),"$LN
     CONFIG+="    'qt_ldflags%': $(quote_flags $(mason ldflags qt system "QtCore QtGui QtOpenGL QtNetwork QtSql")),"$LN
-    CONFIG+="    'qt_moc%': '${MASON_SYSROOT:=}/$(pkg-config QtCore --variable=moc_location)',"$LN
+
+    QT_VERSION_MAJOR=$(qmake -query QT_VERSION | cut -d. -f1)
+    if [ ${QT_VERSION_MAJOR} -gt 4 ] ; then
+        CONFIG+="    'qt_moc%': '$(pkg-config Qt${QT_VERSION_MAJOR}Core --variable=host_bins)/moc',"$LN
+    else
+        CONFIG+="    'qt_moc%': '$(pkg-config QtCore --variable=moc_location)',"$LN
+    fi
 }
