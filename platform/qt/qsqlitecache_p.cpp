@@ -157,7 +157,7 @@ QNetworkCacheMetaData QSqliteCachePrivate::metaData(const QUrl& url) {
     return m_metaData;
 }
 
-uint64_t convertTime(const QDateTime& time) {
+qint64 convertTime(const QDateTime& time) {
     if (time.isNull()) {
         return 0;
     } else {
@@ -175,11 +175,11 @@ private:
     Q_DISABLE_COPY(QSqliteCachePrivateInsert)
 };
 
-QIODevice* QSqliteCachePrivate::prepare(const QNetworkCacheMetaData& metaData) {
+QIODevice* QSqliteCachePrivate::prepare(const QNetworkCacheMetaData& meta) {
     // There can be multiple cache insert operations going on at the same time. Therefore, we must
     // create a separate buffer for everyone and remember the data (using QSqliteCachePrivateInsert)
     QScopedPointer<QSqliteCachePrivateInsert> buffer;
-    buffer.reset(new QSqliteCachePrivateInsert(metaData));
+    buffer.reset(new QSqliteCachePrivateInsert(meta));
     buffer->open(QIODevice::ReadWrite);
     return buffer.take();
 }
@@ -187,22 +187,22 @@ QIODevice* QSqliteCachePrivate::prepare(const QNetworkCacheMetaData& metaData) {
 void QSqliteCachePrivate::insert(QIODevice* device) {
     QScopedPointer<QSqliteCachePrivateInsert> buffer(
         dynamic_cast<QSqliteCachePrivateInsert*>(device));
-    auto& metaData = buffer->m_metaData;
+    auto& meta = buffer->m_metaData;
 
-    m_insert->bindValue(0 /* url */, unifyURL(metaData.url()));
+    m_insert->bindValue(0 /* url */, unifyURL(meta.url()));
 
     const auto status =
-        metaData.attributes().value(QNetworkRequest::HttpStatusCodeAttribute, -1).toInt();
+        meta.attributes().value(QNetworkRequest::HttpStatusCodeAttribute, -1).toInt();
     m_insert->bindValue(1 /* status */, status == 200 ? 1 : 0);
 
     bool etag = false;
     m_insert->bindValue(2 /* kind */, 3);
-    m_insert->bindValue(3 /* modified */, convertTime(metaData.lastModified()));
+    m_insert->bindValue(3 /* modified */, convertTime(meta.lastModified()));
     m_insert->bindValue(4 /* etag */, "test");
-    m_insert->bindValue(5 /* expires */, convertTime(metaData.expirationDate()));
+    m_insert->bindValue(5 /* expires */, convertTime(meta.expirationDate()));
 
     QPair<QByteArray, QByteArray> line;
-    foreach (line, metaData.rawHeaders()) {
+    foreach (line, meta.rawHeaders()) {
         if ("etag" == QString(line.first).toLower()) {
             m_insert->bindValue(4 /* etag */, QString(line.second));
             etag = true;
@@ -214,7 +214,7 @@ void QSqliteCachePrivate::insert(QIODevice* device) {
     }
     // TODO: Compress data that looks easily compressible
     buffer->seek(0);
-    const QByteArray& data = buffer->data();
+    const QByteArray& bufferData = buffer->data();
     uint8_t sig[8];
     if (8 == buffer->peek(reinterpret_cast<char*>(sig), 8) &&
         ((sig[0] == 0x89 && sig[1] == 0x50 && sig[2] == 0x4e && sig[3] == 0x47 &&
@@ -222,10 +222,10 @@ void QSqliteCachePrivate::insert(QIODevice* device) {
          (sig[0] == 0xff && sig[1] == 0xd8 && sig[2] == 0xff) ||
          (sig[0] == 0x47 && sig[1] == 0x49 && sig[2] == 0x46 && sig[3] == 0x38))) {
         // The data has the signature of a compressed file, so we don't need to recompress.
-        m_insert->bindValue(6 /* data */, data);
+        m_insert->bindValue(6 /* data */, bufferData);
         m_insert->bindValue(7 /* compressed */, 0);
     } else {
-        m_insert->bindValue(6 /* data */, qCompress(data));
+        m_insert->bindValue(6 /* data */, qCompress(bufferData));
         m_insert->bindValue(7 /* compressed */, 1);
     }
 
@@ -246,9 +246,9 @@ bool QSqliteCachePrivate::remove(const QUrl& url) {
     }
 }
 
-void QSqliteCachePrivate::updateMetaData(const QNetworkCacheMetaData& metaData) {
-    m_update->bindValue(0 /* expires */, convertTime(metaData.expirationDate()));
-    m_update->bindValue(1 /* url */, unifyURL(metaData.url()));
+void QSqliteCachePrivate::updateMetaData(const QNetworkCacheMetaData& meta) {
+    m_update->bindValue(0 /* expires */, convertTime(meta.expirationDate()));
+    m_update->bindValue(1 /* url */, unifyURL(meta.url()));
     if (!m_update->exec()) {
         mbgl::Log::Warning(mbgl::Event::Database, "Failed to update cache entry: %s",
                            m_update->lastError().text().data());
@@ -256,9 +256,9 @@ void QSqliteCachePrivate::updateMetaData(const QNetworkCacheMetaData& metaData) 
 }
 
 void QSqliteCachePrivate::clear() {
-    QSqlQuery clear = m_cache.exec("DELETE FROM `http_cache`");
-    if (!clear.isActive()) {
+    QSqlQuery clearQuery = m_cache.exec("DELETE FROM `http_cache`");
+    if (!clearQuery.isActive()) {
         mbgl::Log::Warning(mbgl::Event::Database, "Failed to clear cache: %s",
-                           clear.lastError().text().data());
+                           clearQuery.lastError().text().data());
     }
 }
