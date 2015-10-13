@@ -17,6 +17,7 @@ public:
     ~QSqliteCachePrivate() override = default;
 
     bool isValid() const;
+    void setCacheMaximumSize(qint64 size);
 
     // SqliteCache implementation.
     qint64 cacheSize() const override;
@@ -32,11 +33,19 @@ public slots:
     void clear() override;
 
 private:
+    qint64 cacheSoftSize() const;
+    void pruneOldEntries();
+
     QSqlDatabase m_cache;
+
+    qint64 m_pageSize = 1024;
+    qint64 m_maximumCacheSize = -1;
+
     QSqlQuery* m_select = nullptr;
     QSqlQuery* m_insert = nullptr;
     QSqlQuery* m_update = nullptr;
     QSqlQuery* m_delete = nullptr;
+    QSqlQuery* m_collect = nullptr;
 
     QNetworkCacheMetaData m_metaData;
     QScopedPointer<QBuffer> m_buffer;

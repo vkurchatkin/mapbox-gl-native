@@ -2,6 +2,7 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QFileInfo>
 #include <QSqlError>
 #include <QSqlQuery>
 
@@ -10,8 +11,12 @@
 #include <mbgl/util/mapbox.hpp>
 #include <mbgl/platform/log.hpp>
 
+const int kPrunedEntriesLimit = 100;
+const int kMaximumCacheEntrySize = 1048576; // 1 MB
+
 QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
-    : m_cache(QSqlDatabase::addDatabase("QSQLITE")) {
+    : m_cache(QSqlDatabase::addDatabase("QSQLITE"))
+{
     m_cache.setDatabaseName(path);
 
     if (!m_cache.open()) {
@@ -34,12 +39,12 @@ QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
                              createSchema.lastError().text().data());
         }
 
-        QSqlQuery createIndex = m_cache.exec(
-            "CREATE INDEX IF NOT EXISTS `http_cache_kind_idx` ON `http_cache` (`kind`);");
-        if (!createIndex.isActive()) {
-            mbgl::Log::Error(mbgl::Event::Database, "Failed to create database index: %s",
-                             createIndex.lastError().text().data());
+        QSqlQuery pageSizeQuery = m_cache.exec("PRAGMA page_size");
+        if (!pageSizeQuery.first() || !pageSizeQuery.isActive()) {
+            mbgl::Log::Warning(mbgl::Event::Database, "Failed to query page size: %s",
+                               pageSizeQuery.lastError().text().data());
         }
+        m_pageSize = pageSizeQuery.value(0).toLongLong();
 
         m_select = new QSqlQuery(m_cache);
         //                                0          1         2        3         4
@@ -70,6 +75,17 @@ QSqliteCachePrivate::QSqliteCachePrivate(const QString& path)
             mbgl::Log::Error(mbgl::Event::Database, "Failed to prepare delete statement: %s",
                              m_delete->lastError().text().data());
         }
+
+        // See: http://sqlite.org/lang_createtable.html#rowid
+        m_collect = new QSqlQuery(m_cache);
+        if (!m_collect->prepare("DELETE FROM `http_cache` WHERE `rowid` IN (SELECT `rowid` FROM"
+            //                                       0
+            "`http_cache` ORDER BY `rowid` ASC LIMIT ?)")) {
+            mbgl::Log::Error(mbgl::Event::Database, "Failed to prepare collect statement: %s",
+                             m_collect->lastError().text().data());
+        }
+
+        m_collect->bindValue(0 /* limit */, kPrunedEntriesLimit);
     }
 }
 
@@ -77,15 +93,21 @@ bool QSqliteCachePrivate::isValid() const {
     return m_cache.isOpen();
 }
 
-qint64 QSqliteCachePrivate::cacheSize() const {
-    QSqlQuery size = m_cache.exec("SELECT SUM(LENGTH(`data`)) FROM `http_cache`");
-    if (!size.isActive() || !size.first()) {
-        mbgl::Log::Warning(mbgl::Event::Database, "Failed to determine cache size: %s",
-                           size.lastError().text().data());
-        return 0;
-    } else {
-        return size.value(0).toULongLong();
+void QSqliteCachePrivate::setCacheMaximumSize(qint64 size)
+{
+    m_maximumCacheSize = size;
+
+    if (cacheSize() > m_maximumCacheSize) {
+        mbgl::Log::Warning(mbgl::Event::Database, "Current cache size is bigger than "
+                           "the defined maximum size. It won't get truncated.");
     }
+}
+
+qint64 QSqliteCachePrivate::cacheSize() const
+{
+    QFileInfo info(m_cache.databaseName());
+
+    return info.size();
 }
 
 QIODevice* QSqliteCachePrivate::data(const QUrl& url) {
@@ -184,9 +206,22 @@ QIODevice* QSqliteCachePrivate::prepare(const QNetworkCacheMetaData& meta) {
     return buffer.take();
 }
 
-void QSqliteCachePrivate::insert(QIODevice* device) {
+void QSqliteCachePrivate::insert(QIODevice* device)
+{
+    // Make sure we are not dangerously close to the maximum
+    // size and clear some entries if needed.
+    pruneOldEntries();
+
     QScopedPointer<QSqliteCachePrivateInsert> buffer(
         dynamic_cast<QSqliteCachePrivateInsert*>(device));
+
+    // Do not insert extremely large entries on the cache
+    // to prevent the database file to grow beyond our control.
+    if (device->size() > kMaximumCacheEntrySize) {
+        mbgl::Log::Warning(mbgl::Event::Database, "Entry too big, not caching.");
+        return;
+    }
+
     auto& meta = buffer->m_metaData;
 
     m_insert->bindValue(0 /* url */, unifyURL(meta.url()));
@@ -260,5 +295,38 @@ void QSqliteCachePrivate::clear() {
     if (!clearQuery.isActive()) {
         mbgl::Log::Warning(mbgl::Event::Database, "Failed to clear cache: %s",
                            clearQuery.lastError().text().data());
+    }
+}
+
+qint64 QSqliteCachePrivate::cacheSoftSize() const
+{
+    QSqlQuery freeQuery = m_cache.exec("PRAGMA freelist_count");
+    if (!freeQuery.first() || !freeQuery.isActive()) {
+        mbgl::Log::Warning(mbgl::Event::Database, "Failed to query free pages: %s",
+                           freeQuery.lastError().text().data());
+    }
+
+    return cacheSize() - (freeQuery.value(0).toLongLong() * m_pageSize);
+}
+
+void QSqliteCachePrivate::pruneOldEntries()
+{
+    if (m_maximumCacheSize <= 0) {
+        return;
+    }
+
+    // SQLite database never shrinks in size unless we call VACCUM. We here
+    // are monitoring the soft limit (i.e. number of free pages in the file)
+    // and as it approaches to the hard limit (i.e. the actual file size) we
+    // delete an arbitrary number of old cache entries.
+    //
+    // The free pages approach saves us from calling VACCUM or keeping a
+    // running total, which can be costly. We need a buffer because pages can
+    // get fragmented on the database.
+    if (cacheSoftSize() + kMaximumCacheEntrySize * 5 >= m_maximumCacheSize) {
+        if (!m_collect->exec()) {
+            mbgl::Log::Warning(mbgl::Event::Database, "Failed to gc cache: %s",
+                               m_collect->lastError().text().data());
+        }
     }
 }

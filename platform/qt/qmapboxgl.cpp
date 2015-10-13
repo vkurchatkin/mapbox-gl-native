@@ -31,9 +31,9 @@ void QMapboxGL::setAccessToken(const QString &token)
     d_ptr->fileSourceObj.setAccessToken(token);
 }
 
-void QMapboxGL::setCacheDatabase(const QString &path)
+void QMapboxGL::setCacheDatabase(const QString &path, qint64 maximumSize)
 {
-    d_ptr->fileSourceObj.setCacheDatabase(path);
+    d_ptr->fileSourceObj.setCacheDatabase(path, maximumSize);
 }
 
 void QMapboxGL::setStyleJSON(const QString &style)

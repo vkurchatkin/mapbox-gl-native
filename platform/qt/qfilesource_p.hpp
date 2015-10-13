@@ -21,7 +21,7 @@ public:
     ~QFileSourcePrivate() override = default;
 
     void setAccessToken(const QString& token);
-    void setCacheDatabase(const QString& path);
+    void setCacheDatabase(const QString& path, qint64 maximumSize);
 
     // FileSource implementation.
     mbgl::Request* request(const mbgl::Resource&, Callback) override;

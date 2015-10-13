@@ -56,10 +56,11 @@ void QFileSourcePrivate::setAccessToken(const QString& token) {
     m_token = token.toUtf8().constData();
 }
 
-void QFileSourcePrivate::setCacheDatabase(const QString& path) {
+void QFileSourcePrivate::setCacheDatabase(const QString& path, qint64 maximumSize) {
     QScopedPointer<QSqliteCachePrivate> cache(new QSqliteCachePrivate(path));
 
     if (cache->isValid()) {
+        cache->setCacheMaximumSize(maximumSize);
         m_manager.setCache(cache.take());
     }
 }
