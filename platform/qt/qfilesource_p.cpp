@@ -23,13 +23,16 @@ const int kPendingMax = 4;
 namespace mbgl {
 
 // FIXME: Not in use, needed for linking as a library.
-std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*) {
+std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*)
+{
     return nullptr;
 }
 
 } // namespace mbgl
 
-QFileSourcePrivate::QFileSourcePrivate() {
+QFileSourceWorkerPrivate::QFileSourceWorkerPrivate()
+    : m_manager(new QNetworkAccessManager(this))
+{
     QNetworkProxyFactory::setUseSystemConfiguration(true);
 
 #if QT_VERSION >= 0x050000
@@ -44,64 +47,21 @@ QFileSourcePrivate::QFileSourcePrivate() {
         mbgl::Log::Warning(mbgl::Event::HttpRequest, "Could not load list of certificate authorities");
     }
 
-    connect(this, SIGNAL(urlRequested(mbgl::Request*)), this,
-            SLOT(handleUrlRequest(mbgl::Request*)), Qt::QueuedConnection);
-    connect(this, SIGNAL(urlCanceled(mbgl::Request*)), this, SLOT(handleUrlCancel(mbgl::Request*)),
-            Qt::QueuedConnection);
-
-    connect(&m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinish(QNetworkReply*)));
+    connect(m_manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinish(QNetworkReply*)));
 }
 
-void QFileSourcePrivate::setAccessToken(const QString& token) {
-    m_token = token.toUtf8().constData();
-}
-
-void QFileSourcePrivate::setCacheDatabase(const QString& path, qint64 maximumSize) {
+void QFileSourceWorkerPrivate::cacheDatabaseSet(const QString& path, qint64 maximumSize)
+{
     QScopedPointer<QSqliteCachePrivate> cache(new QSqliteCachePrivate(path));
 
     if (cache->isValid()) {
         cache->setCacheMaximumSize(maximumSize);
-        m_manager.setCache(cache.take());
+        m_manager->setCache(cache.take());
     }
 }
 
-mbgl::Request* QFileSourcePrivate::request(const mbgl::Resource& resource, Callback cb) {
-    // WARNING: Must be thread-safe.
-
-    std::string normalizedUrl;
-
-    switch (resource.kind) {
-    case mbgl::Resource::Kind::Style:
-        normalizedUrl = mbgl::util::mapbox::normalizeStyleURL(resource.url, m_token);
-        break;
-    case mbgl::Resource::Kind::Source:
-        normalizedUrl = mbgl::util::mapbox::normalizeSourceURL(resource.url, m_token);
-        break;
-    case mbgl::Resource::Kind::Glyphs:
-        normalizedUrl = mbgl::util::mapbox::normalizeGlyphsURL(resource.url, m_token);
-        break;
-    case mbgl::Resource::Kind::SpriteImage:
-    case mbgl::Resource::Kind::SpriteJSON:
-        normalizedUrl = mbgl::util::mapbox::normalizeSpriteURL(resource.url, m_token);
-        break;
-    default:
-        normalizedUrl = resource.url;
-    }
-
-    mbgl::Request* req = new mbgl::Request({ resource.kind, normalizedUrl }, std::move(cb));
-    emit urlRequested(req);
-
-    return req;
-}
-
-void QFileSourcePrivate::cancel(mbgl::Request* req) {
-    // WARNING: Must be thread-safe.
-
-    req->cancel();
-    emit urlCanceled(req);
-}
-
-void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
+void QFileSourceWorkerPrivate::handleUrlRequest(mbgl::Request* req)
+{
     QUrl url =
         QUrl::fromPercentEncoding(QByteArray(req->resource.url.data(), req->resource.url.size()));
 
@@ -129,10 +89,11 @@ void QFileSourcePrivate::handleUrlRequest(mbgl::Request* req) {
     qreq.setRawHeader("User-Agent", "MapboxGL/1.0 [Qt]");
     qreq.setSslConfiguration(m_ssl);
 
-    data.first = m_manager.get(qreq);
+    data.first = m_manager->get(qreq);
 }
 
-void QFileSourcePrivate::handleUrlCancel(mbgl::Request* req) {
+void QFileSourceWorkerPrivate::handleUrlCancel(mbgl::Request* req)
+{
 #if QT_VERSION < 0x050000
     int queueIndex = m_requestQueue.indexOf(req);
 
@@ -182,7 +143,8 @@ void QFileSourcePrivate::handleUrlCancel(mbgl::Request* req) {
     }
 }
 
-void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
+void QFileSourceWorkerPrivate::replyFinish(QNetworkReply* reply)
+{
     const QUrl& url = reply->request().url();
 
     auto it = m_pending.find(url);
@@ -218,10 +180,95 @@ void QFileSourcePrivate::replyFinish(QNetworkReply* reply) {
 }
 
 #if QT_VERSION < 0x050000
-void QFileSourcePrivate::processQueue()
+void QFileSourceWorkerPrivate::processQueue()
 {
     if (!m_requestQueue.isEmpty()) {
         handleUrlRequest(m_requestQueue.dequeue());
     }
 }
 #endif
+
+QFileSourcePrivate::QFileSourcePrivate()
+{
+    QFileSourceWorkerPrivate *worker = new QFileSourceWorkerPrivate;
+    worker->moveToThread(&m_workerThread);
+
+    connect(&m_workerThread, SIGNAL(finished()), worker, SLOT(deleteLater()));
+
+    connect(this, SIGNAL(cacheDatabaseSet(const QString&, qint64)), worker,
+            SLOT(cacheDatabaseSet(const QString&, qint64)), Qt::QueuedConnection);
+    connect(this, SIGNAL(urlRequested(mbgl::Request*)), worker,
+            SLOT(handleUrlRequest(mbgl::Request*)), Qt::QueuedConnection);
+    connect(this, SIGNAL(urlCanceled(mbgl::Request*)), worker, SLOT(handleUrlCancel(mbgl::Request*)),
+            Qt::QueuedConnection);
+
+    m_workerThread.start(QThread::LowPriority);
+}
+
+QFileSourcePrivate::~QFileSourcePrivate()
+{
+    m_workerThread.quit();
+    m_workerThread.wait();
+}
+
+void QFileSourcePrivate::setAccessToken(const QString& token)
+{
+    // WARNING: Must be thread-safe.
+
+    QMutexLocker locker(&m_tokenMutex);
+    m_token = token.toUtf8().constData();
+}
+
+std::string QFileSourcePrivate::accessToken() const
+{
+    // WARNING: Must be thread-safe.
+
+    QMutexLocker locker(&m_tokenMutex);
+    return m_token;
+}
+
+void QFileSourcePrivate::setCacheDatabase(const QString& path, qint64 maximumSize)
+{
+    // WARNING: Must be thread-safe.
+
+    emit cacheDatabaseSet(path, maximumSize);
+}
+
+mbgl::Request* QFileSourcePrivate::request(const mbgl::Resource& resource, Callback cb)
+{
+    // WARNING: Must be thread-safe.
+
+    std::string normalizedUrl;
+    std::string token(accessToken());
+
+    switch (resource.kind) {
+    case mbgl::Resource::Kind::Style:
+        normalizedUrl = mbgl::util::mapbox::normalizeStyleURL(resource.url, token);
+        break;
+    case mbgl::Resource::Kind::Source:
+        normalizedUrl = mbgl::util::mapbox::normalizeSourceURL(resource.url, token);
+        break;
+    case mbgl::Resource::Kind::Glyphs:
+        normalizedUrl = mbgl::util::mapbox::normalizeGlyphsURL(resource.url, token);
+        break;
+    case mbgl::Resource::Kind::SpriteImage:
+    case mbgl::Resource::Kind::SpriteJSON:
+        normalizedUrl = mbgl::util::mapbox::normalizeSpriteURL(resource.url, token);
+        break;
+    default:
+        normalizedUrl = resource.url;
+    }
+
+    mbgl::Request* req = new mbgl::Request({ resource.kind, normalizedUrl }, std::move(cb));
+    emit urlRequested(req);
+
+    return req;
+}
+
+void QFileSourcePrivate::cancel(mbgl::Request* req)
+{
+    // WARNING: Must be thread-safe.
+
+    req->cancel();
+    emit urlCanceled(req);
+}
