@@ -273,6 +273,7 @@ void QMapboxGL::render()
 
 QMapboxGLPrivate::QMapboxGLPrivate(QMapboxGL *q)
     : QObject(q)
+    , size(0, 0)
     , q_ptr(q)
     , mapObj(*this, fileSourceObj, mbgl::MapMode::Continuous, mbgl::GLContextMode::Shared)
 {
