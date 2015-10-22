@@ -22,6 +22,7 @@
         'mbgl.gyp:platform-<(platform_lib)',
         'mbgl.gyp:asset-<(asset_lib)',
         'mbgl.gyp:cache-<(cache_lib)',
+        'mbgl.gyp:http-<(http_lib)',
       ],
 
       'link_settings': {
@@ -44,6 +45,7 @@
         'mbgl.gyp:platform-<(platform_lib)',
         'mbgl.gyp:asset-<(asset_lib)',
         'mbgl.gyp:cache-<(cache_lib)',
+        'mbgl.gyp:http-<(http_lib)',
         'mbgl.gyp:copy_certificate_bundle',
       ],
 

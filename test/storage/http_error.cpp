@@ -80,6 +80,8 @@ TEST_F(Storage, HTTPConnectionError) {
 #elif MBGL_HTTP_CURL
         const std::string prefix { "Couldn't connect to server: " };
         EXPECT_STREQ(prefix.c_str(), res.error->message.substr(0, prefix.size()).c_str()) << "Full message is: \"" << res.error->message << "\"";
+#elif MBGL_HTTP_QT
+        EXPECT_STREQ(res.error->message.c_str(), "Connection refused");
 #else
         FAIL();
 #endif

@@ -16,6 +16,7 @@
     ['platform_lib == "qt"', { 'includes': [ 'platform-qt.gypi' ] } ],
     ['platform_lib == "linux"', { 'includes': [ 'platform-linux.gypi' ] } ],
     ['platform_lib == "android" and host == "android"', { 'includes': [ 'platform-android.gypi' ] } ],
+    ['http_lib == "qt"', { 'includes': [ 'http-qt.gypi' ] } ],
     ['http_lib == "curl"', { 'includes': [ 'http-curl.gypi' ] } ],
     ['http_lib == "nsurl" and (host == "osx" or host == "ios")', { 'includes': [ 'http-nsurl.gypi' ] } ],
     ['http_lib == "android" and host == "android"', { 'includes': [ 'http-android.gypi' ] } ],

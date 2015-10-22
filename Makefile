@@ -78,8 +78,8 @@ compdb: ; $(RUN) Ninja/compdb
 tidy: ; $(RUN) tidy
 
 .PHONY: qtpackage qt run-qt
-qtpackage: ; $(RUN) PLATFORM=qt HTTP=none Makefile/qtpackage
-qt: ; $(RUN) PLATFORM=qt HTTP=none Makefile/qtapp
+qtpackage: ; $(RUN) PLATFORM=qt HTTP=qt Makefile/qtpackage
+qt: ; $(RUN) PLATFORM=qt HTTP=qt Makefile/qtapp
 run-qt: qt ; (cd build/$(BUILD)-x86_64/$(BUILDTYPE) && ./qmapboxgl)
 
 .PHONY: android android-lib
