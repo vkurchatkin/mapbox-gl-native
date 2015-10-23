@@ -38,6 +38,7 @@
           '<@(boost_cflags)',
           '<@(libuv_cflags)',
           '<@(nunicode_cflags)',
+          '<@(variant_cflags)',
           '<@(opengl_cflags)',
           '<@(qt_cflags)',
           '-Wno-error',
@@ -46,6 +47,7 @@
         'ldflags': [
           '<@(libuv_ldflags)',
           '<@(nunicode_ldflags)',
+          '<@(variant_ldflags)',
           '<@(opengl_ldflags)',
           '<@(qt_ldflags)',
         ],
