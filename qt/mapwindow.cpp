@@ -6,12 +6,9 @@
 #include <QMouseEvent>
 #include <QString>
 
-MapWindow::MapWindow()
+MapWindow::MapWindow(const QMapboxGLSettings &settings) : m_map(nullptr, settings)
 {
     connect(&m_map, SIGNAL(needsRendering()), this, SLOT(updateGL()));
-
-    m_map.setAccessToken(qgetenv("MAPBOX_ACCESS_TOKEN"));
-    m_map.setCacheDatabase("/tmp/mbgl-cache.db", 20 * 1024 * 1024);
 
     // Set default location to Helsinki.
     m_map.setCoordinateZoom(QMapboxGL::Coordinate(60.170448, 24.942046), 14);

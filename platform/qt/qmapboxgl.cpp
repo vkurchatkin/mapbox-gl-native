@@ -6,6 +6,7 @@
 #include <mbgl/platform/gl.hpp>
 #include <mbgl/platform/qt/qmapboxgl.hpp>
 #include <mbgl/sprite/sprite_image.hpp>
+#include <mbgl/storage/sqlite_cache.hpp>
 #include <mbgl/util/geo.hpp>
 #include <mbgl/util/vec.hpp>
 
@@ -15,161 +16,198 @@
 
 #include <chrono>
 
-QMapboxGL::QMapboxGL(QObject *parent_) : QObject(parent_), d_ptr(new QMapboxGLPrivate(this))
+QMapboxGLSettings::QMapboxGLSettings() : m_cacheMaximumSize(0)
 {
+}
+
+unsigned QMapboxGLSettings::cacheDatabaseMaximumSize() const
+{
+    return m_cacheMaximumSize;
+}
+
+void QMapboxGLSettings::setCacheDatabaseMaximumSize(unsigned size)
+{
+    m_cacheMaximumSize = size;
+}
+
+QString QMapboxGLSettings::cacheDatabasePath() const
+{
+    return m_cacheDatabasePath;
+}
+
+void QMapboxGLSettings::setCacheDatabasePath(const QString &path)
+{
+    m_cacheDatabasePath = path;
+}
+
+QString QMapboxGLSettings::accessToken() const {
+    return m_accessToken;
+}
+
+void QMapboxGLSettings::setAccessToken(const QString &token)
+{
+    m_accessToken = token;
+}
+
+QMapboxGL::QMapboxGL(QObject *parent_, const QMapboxGLSettings &settings)
+    : QObject(parent_)
+    , d_ptr(new QMapboxGLPrivate(this))
+{
+    QString path = settings.cacheDatabasePath();
+
+    if (!path.isEmpty()) {
+        d_ptr->cacheObj = std::make_unique<mbgl::SQLiteCache>(path.toStdString());
+    }
+
+    d_ptr->fileSourceObj = std::make_unique<mbgl::DefaultFileSource>(d_ptr->cacheObj.get());
+    d_ptr->fileSourceObj->setAccessToken(settings.accessToken().toStdString());
+
+    d_ptr->mapObj = std::make_unique<mbgl::Map>(*d_ptr, *d_ptr->fileSourceObj,
+            mbgl::MapMode::Continuous, mbgl::GLContextMode::Shared);
 }
 
 QMapboxGL::~QMapboxGL()
 {
+    delete d_ptr;
 }
 
 void QMapboxGL::cycleDebugOptions()
 {
-    d_ptr->mapObj.cycleDebugOptions();
-}
-
-void QMapboxGL::setAccessToken(const QString &token)
-{
-    d_ptr->fileSourceObj.setAccessToken(token);
-}
-
-void QMapboxGL::setCacheDatabase(const QString &path, qint64 maximumSize)
-{
-    d_ptr->fileSourceObj.setCacheDatabase(path, maximumSize);
+    d_ptr->mapObj->cycleDebugOptions();
 }
 
 QString QMapboxGL::styleJSON() const
 {
-    return QString::fromStdString(d_ptr->mapObj.getStyleJSON());
+    return QString::fromStdString(d_ptr->mapObj->getStyleJSON());
 }
 
 QString QMapboxGL::styleURL() const
 {
-    return QString::fromStdString(d_ptr->mapObj.getStyleURL());
+    return QString::fromStdString(d_ptr->mapObj->getStyleURL());
 }
 
 void QMapboxGL::setStyleJSON(const QString &style)
 {
-    d_ptr->mapObj.setStyleJSON(style.toUtf8().constData());
+    d_ptr->mapObj->setStyleJSON(style.toUtf8().constData());
 }
 
 void QMapboxGL::setStyleURL(const QString &url)
 {
-    d_ptr->mapObj.setStyleURL(url.toUtf8().constData());
+    d_ptr->mapObj->setStyleURL(url.toUtf8().constData());
 }
 
 double QMapboxGL::latitude() const
 {
-    return d_ptr->mapObj.getLatLng().latitude;
+    return d_ptr->mapObj->getLatLng().latitude;
 }
 
 void QMapboxGL::setLatitude(double latitude_)
 {
-    d_ptr->mapObj.setLatLng({ latitude_, longitude() });
+    d_ptr->mapObj->setLatLng({ latitude_, longitude() });
 }
 
 double QMapboxGL::longitude() const
 {
-    return d_ptr->mapObj.getLatLng().longitude;
+    return d_ptr->mapObj->getLatLng().longitude;
 }
 
 void QMapboxGL::setLongitude(double longitude_)
 {
-    d_ptr->mapObj.setLatLng({ latitude(), longitude_ });
+    d_ptr->mapObj->setLatLng({ latitude(), longitude_ });
 }
 
 double QMapboxGL::scale() const
 {
-    return d_ptr->mapObj.getScale();
+    return d_ptr->mapObj->getScale();
 }
 
 void QMapboxGL::setScale(double scale_, const QPointF &center, int milliseconds)
 {
-    d_ptr->mapObj.setScale(scale_, { center.x(), center.y() }, std::chrono::milliseconds(milliseconds));
+    d_ptr->mapObj->setScale(scale_, { center.x(), center.y() }, std::chrono::milliseconds(milliseconds));
 }
 
 double QMapboxGL::zoom() const
 {
-    return d_ptr->mapObj.getZoom();
+    return d_ptr->mapObj->getZoom();
 }
 
 void QMapboxGL::setZoom(double zoom_, int milliseconds)
 {
-    d_ptr->mapObj.setZoom(zoom_, std::chrono::milliseconds(milliseconds));
+    d_ptr->mapObj->setZoom(zoom_, std::chrono::milliseconds(milliseconds));
 }
 
 double QMapboxGL::minimumZoom() const
 {
-    return d_ptr->mapObj.getMinZoom();
+    return d_ptr->mapObj->getMinZoom();
 }
 
 double QMapboxGL::maximumZoom() const
 {
-    return d_ptr->mapObj.getMaxZoom();
+    return d_ptr->mapObj->getMaxZoom();
 }
 
 QMapboxGL::Coordinate QMapboxGL::coordinate() const
 {
-    const mbgl::LatLng& latLng = d_ptr->mapObj.getLatLng();
+    const mbgl::LatLng& latLng = d_ptr->mapObj->getLatLng();
 
     return Coordinate(latLng.latitude, latLng.longitude);
 }
 
 void QMapboxGL::setCoordinate(const Coordinate &coordinate_, int milliseconds)
 {
-    d_ptr->mapObj.setLatLng(
+    d_ptr->mapObj->setLatLng(
         { coordinate_.first, coordinate_.second }, std::chrono::milliseconds(milliseconds));
 }
 
 void QMapboxGL::setCoordinateZoom(const Coordinate &coordinate_, double zoom_, int milliseconds)
 {
-    d_ptr->mapObj.setLatLngZoom(
+    d_ptr->mapObj->setLatLngZoom(
         { coordinate_.first, coordinate_.second }, zoom_, std::chrono::milliseconds(milliseconds));
 }
 
 double QMapboxGL::bearing() const
 {
-    return d_ptr->mapObj.getBearing();
+    return d_ptr->mapObj->getBearing();
 }
 
 void QMapboxGL::setBearing(double degrees, int milliseconds)
 {
-    d_ptr->mapObj.setBearing(degrees, std::chrono::milliseconds(milliseconds));
+    d_ptr->mapObj->setBearing(degrees, std::chrono::milliseconds(milliseconds));
 }
 
 void QMapboxGL::setBearing(double degrees, const QPointF &center)
 {
-    d_ptr->mapObj.setBearing(degrees, { center.x(), d_ptr->size.height() - center.y() });
+    d_ptr->mapObj->setBearing(degrees, { center.x(), d_ptr->size.height() - center.y() });
 }
 
 double QMapboxGL::pitch() const
 {
-    return d_ptr->mapObj.getPitch();
+    return d_ptr->mapObj->getPitch();
 }
 
 void QMapboxGL::setPitch(double pitch_, int milliseconds)
 {
-    d_ptr->mapObj.setPitch(pitch_, std::chrono::milliseconds(milliseconds));
+    d_ptr->mapObj->setPitch(pitch_, std::chrono::milliseconds(milliseconds));
 }
 
 void QMapboxGL::setGestureInProgress(bool inProgress)
 {
-    d_ptr->mapObj.setGestureInProgress(inProgress);
+    d_ptr->mapObj->setGestureInProgress(inProgress);
 }
 
 void QMapboxGL::addClass(const QString &className)
 {
-    d_ptr->mapObj.addClass(className.toUtf8().constData());
+    d_ptr->mapObj->addClass(className.toUtf8().constData());
 }
 
 void QMapboxGL::removeClass(const QString &className)
 {
-    d_ptr->mapObj.removeClass(className.toUtf8().constData());
+    d_ptr->mapObj->removeClass(className.toUtf8().constData());
 }
 
 bool QMapboxGL::hasClass(const QString &className) const
 {
-    return d_ptr->mapObj.hasClass(className.toUtf8().constData());
+    return d_ptr->mapObj->hasClass(className.toUtf8().constData());
 }
 
 void QMapboxGL::setClasses(const QStringList &classNames)
@@ -181,20 +219,20 @@ void QMapboxGL::setClasses(const QStringList &classNames)
         mbglClassNames.emplace_back(className.toUtf8().constData());
     }
 
-    d_ptr->mapObj.setClasses(mbglClassNames);
+    d_ptr->mapObj->setClasses(mbglClassNames);
 }
 
 QStringList QMapboxGL::getClasses() const
 {
     QStringList classNames;
-    for (const std::string &mbglClass : d_ptr->mapObj.getClasses()) {
+    for (const std::string &mbglClass : d_ptr->mapObj->getClasses()) {
         classNames << QString::fromStdString(mbglClass);
     }
     return classNames;
 }
 
 void QMapboxGL::setDefaultTransitionDuration(int milliseconds) {
-    d_ptr->mapObj.setDefaultTransitionDuration(std::chrono::milliseconds(milliseconds));
+    d_ptr->mapObj->setDefaultTransitionDuration(std::chrono::milliseconds(milliseconds));
 }
 
 mbgl::PointAnnotation fromQMapboxGLPointAnnotation(const QMapboxGL::PointAnnotation &pointAnnotation) {
@@ -205,7 +243,7 @@ mbgl::PointAnnotation fromQMapboxGLPointAnnotation(const QMapboxGL::PointAnnotat
 
 QMapboxGL::AnnotationID QMapboxGL::addPointAnnotation(const PointAnnotation &pointAnnotation)
 {
-    return d_ptr->mapObj.addPointAnnotation(fromQMapboxGLPointAnnotation(pointAnnotation));
+    return d_ptr->mapObj->addPointAnnotation(fromQMapboxGLPointAnnotation(pointAnnotation));
 }
 
 QMapboxGL::AnnotationIDs QMapboxGL::addPointAnnotations(const PointAnnotations &pointAnnotations)
@@ -218,7 +256,7 @@ QMapboxGL::AnnotationIDs QMapboxGL::addPointAnnotations(const PointAnnotations &
     }
 
     AnnotationIDs ids;
-    for (const mbgl::AnnotationID &id : d_ptr->mapObj.addPointAnnotations(mbglPointAnnotations)) {
+    for (const mbgl::AnnotationID &id : d_ptr->mapObj->addPointAnnotations(mbglPointAnnotations)) {
         ids << id;
     }
 
@@ -249,7 +287,7 @@ mbgl::ShapeAnnotation fromQMapboxGLShapeAnnotation(const QMapboxGL::ShapeAnnotat
 
 QMapboxGL::AnnotationID QMapboxGL::addShapeAnnotation(const ShapeAnnotation &shapeAnnotation)
 {
-    return d_ptr->mapObj.addShapeAnnotation(fromQMapboxGLShapeAnnotation(shapeAnnotation));
+    return d_ptr->mapObj->addShapeAnnotation(fromQMapboxGLShapeAnnotation(shapeAnnotation));
 }
 
 QMapboxGL::AnnotationIDs QMapboxGL::addShapeAnnotations(const ShapeAnnotations &shapeAnnotations)
@@ -262,7 +300,7 @@ QMapboxGL::AnnotationIDs QMapboxGL::addShapeAnnotations(const ShapeAnnotations &
     }
 
     AnnotationIDs ids;
-    for (const mbgl::AnnotationID &id : d_ptr->mapObj.addShapeAnnotations(mbglShapeAnnotations)) {
+    for (const mbgl::AnnotationID &id : d_ptr->mapObj->addShapeAnnotations(mbglShapeAnnotations)) {
         ids << id;
     }
 
@@ -271,7 +309,7 @@ QMapboxGL::AnnotationIDs QMapboxGL::addShapeAnnotations(const ShapeAnnotations &
 
 void QMapboxGL::removeAnnotation(AnnotationID annotationID)
 {
-    d_ptr->mapObj.removeAnnotation(annotationID);
+    d_ptr->mapObj->removeAnnotation(annotationID);
 }
 
 void QMapboxGL::removeAnnotations(const AnnotationIDs &annotationIDs)
@@ -283,42 +321,42 @@ void QMapboxGL::removeAnnotations(const AnnotationIDs &annotationIDs)
         mbglAnnotationIds.emplace_back(annotationID);
     }
 
-    d_ptr->mapObj.removeAnnotations(mbglAnnotationIds);
+    d_ptr->mapObj->removeAnnotations(mbglAnnotationIds);
 }
 
 bool QMapboxGL::isRotating() const
 {
-    return d_ptr->mapObj.isRotating();
+    return d_ptr->mapObj->isRotating();
 }
 
 bool QMapboxGL::isScaling() const
 {
-    return d_ptr->mapObj.isScaling();
+    return d_ptr->mapObj->isScaling();
 }
 
 bool QMapboxGL::isPanning() const
 {
-    return d_ptr->mapObj.isPanning();
+    return d_ptr->mapObj->isPanning();
 }
 
 bool QMapboxGL::isFullyLoaded() const
 {
-    return d_ptr->mapObj.isFullyLoaded();
+    return d_ptr->mapObj->isFullyLoaded();
 }
 
 void QMapboxGL::moveBy(const QPointF &offset)
 {
-    d_ptr->mapObj.moveBy({ offset.x(), offset.y() });
+    d_ptr->mapObj->moveBy({ offset.x(), offset.y() });
 }
 
 void QMapboxGL::scaleBy(double scale_, const QPointF &center, int milliseconds) {
-    d_ptr->mapObj.scaleBy(
+    d_ptr->mapObj->scaleBy(
         scale_, { center.x(), center.y() }, std::chrono::milliseconds(milliseconds));
 }
 
 void QMapboxGL::rotateBy(const QPointF &first, const QPointF &second)
 {
-    d_ptr->mapObj.rotateBy({ first.x(), first.y() }, { second.x(), second.y() });
+    d_ptr->mapObj->rotateBy({ first.x(), first.y() }, { second.x(), second.y() });
 }
 
 void QMapboxGL::resize(const QSize& size)
@@ -328,7 +366,7 @@ void QMapboxGL::resize(const QSize& size)
     }
 
     d_ptr->size = size;
-    d_ptr->mapObj.update(mbgl::Update::Dimensions);
+    d_ptr->mapObj->update(mbgl::Update::Dimensions);
 }
 
 void QMapboxGL::addAnnotationIcon(const QString &name, const QImage &sprite)
@@ -339,7 +377,7 @@ void QMapboxGL::addAnnotationIcon(const QString &name, const QImage &sprite)
 
     const QImage swapped = sprite.rgbSwapped();
 
-    d_ptr->mapObj.addAnnotationIcon(name.toStdString(), std::make_shared<mbgl::SpriteImage>(
+    d_ptr->mapObj->addAnnotationIcon(name.toStdString(), std::make_shared<mbgl::SpriteImage>(
         swapped.width(), swapped.height(), 1.0,
         std::string(reinterpret_cast<const char*>(swapped.constBits()), swapped.byteCount())));
 }
@@ -347,7 +385,7 @@ void QMapboxGL::addAnnotationIcon(const QString &name, const QImage &sprite)
 QPointF QMapboxGL::pixelForCoordinate(const Coordinate &coordinate_) const
 {
     const mbgl::vec2<double> pixel =
-        d_ptr->mapObj.pixelForLatLng({ coordinate_.first, coordinate_.second });
+        d_ptr->mapObj->pixelForLatLng({ coordinate_.first, coordinate_.second });
 
     return QPointF(pixel.x, d_ptr->size.height() - pixel.y);
 }
@@ -355,21 +393,20 @@ QPointF QMapboxGL::pixelForCoordinate(const Coordinate &coordinate_) const
 QMapboxGL::Coordinate QMapboxGL::coordinateForPixel(const QPointF &pixel) const
 {
     const mbgl::LatLng latLng =
-        d_ptr->mapObj.latLngForPixel({ pixel.x(), d_ptr->size.height() - pixel.y() });
+        d_ptr->mapObj->latLngForPixel({ pixel.x(), d_ptr->size.height() - pixel.y() });
 
     return Coordinate(latLng.latitude, latLng.longitude);
 }
 
 void QMapboxGL::render()
 {
-    d_ptr->mapObj.render();
+    d_ptr->mapObj->render();
 }
 
 QMapboxGLPrivate::QMapboxGLPrivate(QMapboxGL *q)
     : QObject(q)
     , size(0, 0)
     , q_ptr(q)
-    , mapObj(*this, fileSourceObj, mbgl::MapMode::Continuous, mbgl::GLContextMode::Shared)
 {
     connect(this, SIGNAL(needsRendering()), q_ptr, SIGNAL(needsRendering()));
     connect(this, SIGNAL(mapRegionDidChange()), q_ptr, SIGNAL(mapRegionDidChange()));

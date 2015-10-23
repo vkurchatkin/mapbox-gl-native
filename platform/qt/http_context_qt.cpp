@@ -147,4 +147,9 @@ HTTPRequestBase* HTTPQtContext::createRequest(const Resource& resource,
     return new HTTPQtRequest(this, resource, callback, response);
 }
 
+std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext()
+{
+    return std::make_unique<HTTPQtContext>();
+}
+
 } // mbgl

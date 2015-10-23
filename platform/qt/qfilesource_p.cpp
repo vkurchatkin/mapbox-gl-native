@@ -20,16 +20,6 @@
 // Many get canceled before we need to make the actual get().
 const int kPendingMax = 4;
 
-namespace mbgl {
-
-// FIXME: Not in use, needed for linking as a library.
-std::unique_ptr<HTTPContextBase> HTTPContextBase::createContext(uv_loop_s*)
-{
-    return nullptr;
-}
-
-} // namespace mbgl
-
 QFileSourceWorkerPrivate::QFileSourceWorkerPrivate()
     : m_manager(new QNetworkAccessManager(this))
 {

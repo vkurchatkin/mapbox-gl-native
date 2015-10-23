@@ -1,19 +1,20 @@
 #ifndef QMAPBOXGL_P_H
 #define QMAPBOXGL_P_H
 
-#include "qfilesource_p.hpp"
-
 #include <mbgl/map/map.hpp>
 #include <mbgl/map/view.hpp>
 #include <mbgl/platform/qt/qmapboxgl.hpp>
+#include <mbgl/storage/default_file_source.hpp>
 #include <mbgl/util/run_loop.hpp>
 
 #include <QSize>
 
+#include <memory>
+
 namespace mbgl {
 
 class Map;
-class FileSource;
+class SQLiteCache;
 
 }  // namespace mbgl
 
@@ -42,10 +43,11 @@ public:
 
     QMapboxGL *q_ptr = nullptr;
 
-    QFileSourcePrivate fileSourceObj;
-
     mbgl::util::RunLoop loop;
-    mbgl::Map mapObj;
+
+    std::unique_ptr<mbgl::SQLiteCache> cacheObj;
+    std::unique_ptr<mbgl::DefaultFileSource> fileSourceObj;
+    std::unique_ptr<mbgl::Map> mapObj;
 
 signals:
     void mapRegionDidChange();
