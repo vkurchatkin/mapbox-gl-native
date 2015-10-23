@@ -193,6 +193,10 @@ QStringList QMapboxGL::getClasses() const
     return classNames;
 }
 
+void QMapboxGL::setDefaultTransitionDuration(int milliseconds) {
+    d_ptr->mapObj.setDefaultTransitionDuration(std::chrono::milliseconds(milliseconds));
+}
+
 mbgl::PointAnnotation fromQMapboxGLPointAnnotation(const QMapboxGL::PointAnnotation &pointAnnotation) {
     const QMapboxGL::Coordinate &coordinate = pointAnnotation.first;
     const QString &icon = pointAnnotation.second;

@@ -85,6 +85,8 @@ public:
     void setClasses(const QStringList &);
     QStringList getClasses() const;
 
+    void setDefaultTransitionDuration(int milliseconds = 0);
+
     AnnotationID addPointAnnotation(const PointAnnotation &);
     AnnotationIDs addPointAnnotations(const PointAnnotations &);
 
