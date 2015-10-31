@@ -40,6 +40,10 @@
       'product_name': 'qmapboxgl',
       'type': 'executable',
 
+      'includes': [
+        '../gyp/qt.gypi',
+      ],
+
       'dependencies': [
         'mbgl.gyp:core',
         'mbgl.gyp:platform-<(platform_lib)',
