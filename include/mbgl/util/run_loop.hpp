@@ -41,6 +41,18 @@ public:
     void runOnce();
     void stop();
 
+    void notifyPendingEvents() {
+        if (foreignRunLoopIntegrationCallback) foreignRunLoopIntegrationCallback();
+    }
+
+    void setForeignRunLoopIntegrationCallback(std::function<void()>&& cb) {
+        foreignRunLoopIntegrationCallback = std::move(cb);
+    }
+
+    bool hasForeignRunLoopIntegration() const {
+        return foreignRunLoopIntegrationCallback != nullptr;
+    }
+
     // So far only needed by the libcurl backend.
     void addWatch(int fd, Event, std::function<void(int, Event)>&& callback);
     void removeWatch(int fd);
@@ -174,6 +186,8 @@ private:
 
     Queue queue;
     std::mutex mutex;
+
+    std::function<void()> foreignRunLoopIntegrationCallback;
 
     class Impl;
     std::unique_ptr<Impl> impl;
