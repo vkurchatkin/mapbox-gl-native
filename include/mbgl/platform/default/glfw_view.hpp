@@ -2,6 +2,7 @@
 #define MBGL_COMMON_GLFW_VIEW
 
 #include <mbgl/mbgl.hpp>
+#include <mbgl/util/run_loop.hpp>
 
 #ifdef MBGL_USE_GLES2
 #define GLFW_INCLUDE_ES2
@@ -62,7 +63,8 @@ private:
     mbgl::AnnotationIDs annotationIDs;
     std::vector<std::string> spriteIDs;
 
-private:
+    mbgl::util::RunLoop loop;
+
     bool fullscreen = false;
     const bool benchmark = false;
     bool tracking = false;
@@ -87,7 +89,8 @@ private:
     std::function<void()> changeStyleCallback;
 
     GLFWwindow *window = nullptr;
-    std::atomic_flag clean = ATOMIC_FLAG_INIT;
+    std::atomic_flag render = ATOMIC_FLAG_INIT;
+    std::atomic_flag process = ATOMIC_FLAG_INIT;
 };
 
 #endif
