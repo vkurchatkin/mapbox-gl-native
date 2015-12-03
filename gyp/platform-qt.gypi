@@ -13,11 +13,11 @@
 
       'sources': [
         '../include/mbgl/platform/qt/qmapboxgl.hpp',
-        '../platform/default/application_root.cpp',
-        '../platform/default/asset_root.cpp',
         '../platform/default/log_stderr.cpp',
         '../platform/default/string_stdlib.cpp',
         '../platform/default/thread.cpp',
+        '../platform/qt/application_root.cpp',
+        '../platform/qt/asset_root.cpp',
         '../platform/qt/async_task.cpp',
         '../platform/qt/async_task_impl.hpp',
         '../platform/qt/image.cpp',
@@ -32,7 +32,6 @@
       'variables': {
         'cflags_cc': [
           '<@(boost_cflags)',
-          '<@(libuv_cflags)',
           '<@(nunicode_cflags)',
           '<@(variant_cflags)',
           '<@(opengl_cflags)',
@@ -41,14 +40,12 @@
           '-fPIC',
         ],
         'ldflags': [
-          '<@(libuv_ldflags)',
           '<@(nunicode_ldflags)',
           '<@(variant_ldflags)',
           '<@(opengl_ldflags)',
           '<@(qt_ldflags)',
         ],
         'libraries': [
-          '<@(libuv_static_libs)',
           '<@(nunicode_static_libs)',
         ],
       },
