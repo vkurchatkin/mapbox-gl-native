@@ -48,7 +48,6 @@
         'miscellaneous/async_task.cpp',
         'miscellaneous/clip_ids.cpp',
         'miscellaneous/binpack.cpp',
-        'miscellaneous/bilinear.cpp',
         'miscellaneous/comparisons.cpp',
         'miscellaneous/functions.cpp',
         'miscellaneous/geo.cpp',

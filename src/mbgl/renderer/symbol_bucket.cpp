@@ -246,11 +246,10 @@ void SymbolBucket::addFeatures(uintptr_t tileUID,
 
         // if feature has icon, get sprite atlas position
         if (feature.sprite.length()) {
-            auto image = spriteAtlas.getImage(feature.sprite, false);
+            auto image = spriteAtlas.getIcon(feature.sprite);
             if (image) {
-                shapedIcon = shapeIcon((*image).pos, layout);
-                assert((*image).texture);
-                if ((*image).texture->sdf) {
+                shapedIcon = shapeIcon(*image, layout);
+                if ((*image).sdf) {
                     sdfIcons = true;
                 }
             }

@@ -1561,13 +1561,12 @@ public:
     [image lockFocus];
     NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithFocusedViewRect:{ NSZeroPoint, size }];
     [image unlockFocus];
-    
+
     // Get the image’s raw pixel data as an RGBA buffer.
-    std::string pixelString((const char *)rep.bitmapData, rep.pixelsWide * rep.pixelsHigh * 4 /* RGBA */);
-    auto cSpriteImage = std::make_shared<mbgl::SpriteImage>((uint16_t)rep.size.width,
-                                                            (uint16_t)rep.size.height,
-                                                            (float)(rep.pixelsWide / size.width),
-                                                            std::move(pixelString));
+    mbgl::PremultipliedImage pixels(rep.pixelsWide, rep.pixelsHigh);
+    std::copy(rep.bitmapData, rep.bitmapData + pixels.size(), pixels.data.get());
+
+    auto cSpriteImage = std::make_shared<mbgl::SpriteImage>(std::move(pixels), rep.pixelsWide / size.width);
     NSString *symbolName = [MGLAnnotationSpritePrefix stringByAppendingString:annotationImage.reuseIdentifier];
     _mbglMap->addAnnotationIcon(symbolName.UTF8String, cSpriteImage);
     

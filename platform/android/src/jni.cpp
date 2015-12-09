@@ -1224,19 +1224,20 @@ void JNICALL nativeAddAnnotationIcon(JNIEnv *env, jobject obj, jlong nativeMapVi
     NativeMapView *nativeMapView = reinterpret_cast<NativeMapView *>(nativeMapViewPtr);
 
     const std::string symbolName = std_string_from_jstring(env, symbol);
-
     jbyte* pixelData = env->GetByteArrayElements(jpixels, nullptr);
     jsize size = env->GetArrayLength(jpixels);
-    std::string pixels(reinterpret_cast<char*>(pixelData), size);
+
+    mbgl::PremultipliedImage pixels(width, height);
+	if (size < 0 || pixels.size() != size_t(size)) {
+	    mbgl::Log::Error(mbgl::Event::JNI, "mismatched array length in nativeSetSprite");
+		return;
+	}
+	std::copy(pixelData, pixelData + size, pixels.data.get());
     env->ReleaseByteArrayElements(jpixels, pixelData, JNI_ABORT);
 
-    auto spriteImage = std::make_shared<mbgl::SpriteImage>(
-        uint16_t(width),
-        uint16_t(height),
-        float(scale),
-        std::move(pixels));
-
-    nativeMapView->getMap().addAnnotationIcon(symbolName, spriteImage);
+    nativeMapView->getMap().addAnnotationIcon(symbolName, std::make_shared<mbgl::SpriteImage>(
+        std::move(pixels),
+		float(scale)));
 }
 
 void JNICALL nativeSetVisibleCoordinateBounds(JNIEnv *env, jobject obj, jlong nativeMapViewPtr,

@@ -12,47 +12,30 @@
 
 namespace mbgl {
 
-SpriteImagePtr createSpriteImage(const PremultipliedImage& image,
-                                 const uint16_t srcX,
-                                 const uint16_t srcY,
-                                 const uint16_t srcWidth,
-                                 const uint16_t srcHeight,
-                                 const double ratio,
-                                 const bool sdf) {
-    // Disallow invalid parameter configurations.
-    if (srcWidth == 0 || srcHeight == 0 || ratio <= 0 || ratio > 10 || srcWidth > 1024 ||
-        srcHeight > 1024) {
+SpriteImagePtr createSpriteImage(const PremultipliedImage& src,
+                                 size_t x, size_t y, size_t w, size_t h,
+                                 double ratio, bool sdf) {
+    // Disallow invalid parameter configurations and avoid overflow.
+    if (w == 0 || h == 0 || w > 1024 || h > 1024 || ratio <= 0 || ratio > 10 ||
+        std::fmod(w, ratio) != 0 || std::fmod(h, ratio) != 0 ||
+        w > src.width || h > src.height || x > src.width - w || y > src.height - h) {
         Log::Warning(Event::Sprite, "Can't create sprite with invalid metrics");
         return nullptr;
     }
 
-    const uint16_t width = std::ceil(double(srcWidth) / ratio);
-    const uint16_t dstWidth = std::ceil(width * ratio);
-    assert(dstWidth >= srcWidth);
-    const uint16_t height = std::ceil(double(srcHeight) / ratio);
-    const uint16_t dstHeight = std::ceil(height * ratio);
-    assert(dstHeight >= srcHeight);
+    PremultipliedImage dst(w, h);
 
-    std::string data(dstWidth * dstHeight * 4, '\0');
+    const uint32_t* srcData = reinterpret_cast<const uint32_t*>(src.data.get()) + src.width * y + x;
+          uint32_t* dstData = reinterpret_cast<      uint32_t*>(dst.data.get());
 
-    auto srcData = reinterpret_cast<const uint32_t*>(image.data.get());
-    auto dstData = reinterpret_cast<uint32_t*>(const_cast<char*>(data.data()));
-
-    const int32_t maxX = std::min(uint32_t(image.width), uint32_t(srcWidth + srcX)) - srcX;
-    assert(maxX <= int32_t(image.width));
-    const int32_t maxY = std::min(uint32_t(image.height), uint32_t(srcHeight + srcY)) - srcY;
-    assert(maxY <= int32_t(image.height));
-
-    // Copy from the source image into our individual sprite image
-    for (uint16_t y = 0; y < maxY; ++y) {
-        const auto dstRow = y * dstWidth;
-        const auto srcRow = (y + srcY) * image.width + srcX;
-        for (uint16_t x = 0; x < maxX; ++x) {
-            dstData[dstRow + x] = srcData[srcRow + x];
+    for (size_t i = 0; i < h; ++i) {
+        for (size_t j = 0; j < w; ++j) {
+            *dstData++ = *srcData++;
         }
+        srcData += src.width - w;
     }
 
-    return std::make_unique<const SpriteImage>(width, height, ratio, std::move(data), sdf);
+    return std::make_unique<const SpriteImage>(std::move(dst), ratio, sdf);
 }
 
 namespace {

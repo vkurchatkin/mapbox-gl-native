@@ -261,8 +261,8 @@ void Painter::renderBackground(const BackgroundLayer& layer) {
     const BackgroundPaintProperties& properties = layer.paint;
 
     if (!properties.pattern.value.to.empty()) {
-        mapbox::util::optional<SpriteAtlasPosition> imagePosA = spriteAtlas->getPosition(properties.pattern.value.from, true);
-        mapbox::util::optional<SpriteAtlasPosition> imagePosB = spriteAtlas->getPosition(properties.pattern.value.to, true);
+        mapbox::util::optional<SpriteAtlasImage> imagePosA = spriteAtlas->getPattern(properties.pattern.value.from);
+        mapbox::util::optional<SpriteAtlasImage> imagePosB = spriteAtlas->getPattern(properties.pattern.value.to);
 
         if (!imagePosA || !imagePosB)
             return;
@@ -282,29 +282,27 @@ void Painter::renderBackground(const BackgroundLayer& layer) {
         PrecisionPoint center = state.latLngToPoint(latLng);
         float scale = 1 / std::pow(2, zoomFraction);
 
-        std::array<float, 2> sizeA = (*imagePosA).size;
         mat3 matrixA;
         matrix::identity(matrixA);
         matrix::scale(matrixA, matrixA,
-                      1.0f / (sizeA[0] * properties.pattern.value.fromScale),
-                      1.0f / (sizeA[1] * properties.pattern.value.fromScale));
+                      1.0f / ((*imagePosA).width * properties.pattern.value.fromScale),
+                      1.0f / ((*imagePosA).height * properties.pattern.value.fromScale));
         matrix::translate(matrixA, matrixA,
-                          std::fmod(center.x * 512, sizeA[0] * properties.pattern.value.fromScale),
-                          std::fmod(center.y * 512, sizeA[1] * properties.pattern.value.fromScale));
+                          std::fmod(center.x * 512, (*imagePosA).width * properties.pattern.value.fromScale),
+                          std::fmod(center.y * 512, (*imagePosA).height * properties.pattern.value.fromScale));
         matrix::rotate(matrixA, matrixA, -state.getAngle());
         matrix::scale(matrixA, matrixA,
                        scale * state.getWidth()  / 2,
                       -scale * state.getHeight() / 2);
 
-        std::array<float, 2> sizeB = (*imagePosB).size;
         mat3 matrixB;
         matrix::identity(matrixB);
         matrix::scale(matrixB, matrixB,
-                      1.0f / (sizeB[0] * properties.pattern.value.toScale),
-                      1.0f / (sizeB[1] * properties.pattern.value.toScale));
+                      1.0f / ((*imagePosB).width * properties.pattern.value.toScale),
+                      1.0f / ((*imagePosB).height * properties.pattern.value.toScale));
         matrix::translate(matrixB, matrixB,
-                          std::fmod(center.x * 512, sizeB[0] * properties.pattern.value.toScale),
-                          std::fmod(center.y * 512, sizeB[1] * properties.pattern.value.toScale));
+                          std::fmod(center.x * 512, (*imagePosB).width * properties.pattern.value.toScale),
+                          std::fmod(center.y * 512, (*imagePosB).height * properties.pattern.value.toScale));
         matrix::rotate(matrixB, matrixB, -state.getAngle());
         matrix::scale(matrixB, matrixB,
                        scale * state.getWidth()  / 2,

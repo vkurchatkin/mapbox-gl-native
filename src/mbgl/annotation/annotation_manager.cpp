@@ -157,17 +157,17 @@ void AnnotationManager::removeTileMonitor(AnnotationTileMonitor& monitor) {
 
 void AnnotationManager::addIcon(const std::string& name, std::shared_ptr<const SpriteImage> sprite) {
     spriteStore.setSprite(name, sprite);
-    spriteAtlas.updateDirty();
+//    spriteAtlas.updateDirty();
 }
-    
+
 void AnnotationManager::removeIcon(const std::string& name) {
     spriteStore.removeSprite(name);
-    spriteAtlas.updateDirty();
+//    spriteAtlas.updateDirty();
 }
 
 double AnnotationManager::getTopOffsetPixelsForIcon(const std::string& name) {
-    auto sprite = spriteStore.getSprite(name);
-    return sprite ? -sprite->height / 2 : 0;
+    std::shared_ptr<const SpriteImage> sprite = spriteStore.getSprite(name);
+    return sprite ? -sprite->image.height / sprite->pixelRatio / 2 : 0;
 }
 
 } // namespace mbgl

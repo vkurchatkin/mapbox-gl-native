@@ -13,7 +13,7 @@ using namespace mbgl;
 TEST(Sprite, SpriteImageCreationInvalid) {
     FixtureLog log;
 
-    const PremultipliedImage image_1x = decodeImage(util::read_file("test/fixtures/annotations/emerald.png"));
+    const PremultipliedImage image_1x = decodeImage(util::read_file("test/fixtures/sprites/emerald.png"));
 
     ASSERT_EQ(200u, image_1x.width);
     ASSERT_EQ(299u, image_1x.height);
@@ -34,86 +34,52 @@ TEST(Sprite, SpriteImageCreationInvalid) {
 }
 
 TEST(Sprite, SpriteImageCreation1x) {
-    const PremultipliedImage image_1x = decodeImage(util::read_file("test/fixtures/annotations/emerald.png"));
+    const PremultipliedImage image_1x = decodeImage(util::read_file("test/fixtures/sprites/emerald.png"));
 
     ASSERT_EQ(200u, image_1x.width);
     ASSERT_EQ(299u, image_1x.height);
 
     { // "museum_icon":{"x":177,"y":187,"width":18,"height":18,"pixelRatio":1,"sdf":false}
-        const auto sprite = createSpriteImage(image_1x, 177, 187, 18, 18, 1, false);
+        SpriteImagePtr sprite = createSpriteImage(image_1x, 177, 187, 18, 18, 1, false);
         ASSERT_TRUE(sprite.get());
-        EXPECT_EQ(18, sprite->width);
-        EXPECT_EQ(18, sprite->height);
-        EXPECT_EQ(18, sprite->pixelWidth);
-        EXPECT_EQ(18, sprite->pixelHeight);
+        EXPECT_EQ(18, sprite->image.width);
+        EXPECT_EQ(18, sprite->image.height);
         EXPECT_EQ(1, sprite->pixelRatio);
-        EXPECT_EQ(0x7FCC5F263D1FFE16u, test::crc64(sprite->data));
+        test::checkImage("test/fixtures/sprites/sprite_creation_1x", sprite->image);
     }
 
-    { // outside image == blank
-        const auto sprite = createSpriteImage(image_1x, 200, 0, 16, 16, 1, false);
-        ASSERT_TRUE(sprite.get());
-        EXPECT_EQ(16, sprite->width);
-        EXPECT_EQ(16, sprite->height);
-        EXPECT_EQ(16, sprite->pixelWidth);
-        EXPECT_EQ(16, sprite->pixelHeight);
-        EXPECT_EQ(1, sprite->pixelRatio);
-        EXPECT_EQ(0x0000000000000000u, test::crc64(sprite->data)) << std::hex << test::crc64(sprite->data);
-    }
-
-    { // outside image == blank
-        const auto sprite = createSpriteImage(image_1x, 0, 300, 16, 16, 1, false);
-        ASSERT_TRUE(sprite.get());
-        EXPECT_EQ(16, sprite->width);
-        EXPECT_EQ(16, sprite->height);
-        EXPECT_EQ(16, sprite->pixelWidth);
-        EXPECT_EQ(16, sprite->pixelHeight);
-        EXPECT_EQ(1, sprite->pixelRatio);
-        EXPECT_EQ(0x0000000000000000u, test::crc64(sprite->data)) << std::hex << test::crc64(sprite->data);
+    { // outside image
+        ASSERT_FALSE(createSpriteImage(image_1x, 200, 0, 16, 16, 1, false));
+        ASSERT_FALSE(createSpriteImage(image_1x, 0, 300, 16, 16, 1, false));
     }
 }
 
 TEST(Sprite, SpriteImageCreation2x) {
-    const PremultipliedImage image_2x = decodeImage(util::read_file("test/fixtures/annotations/emerald@2x.png"));
+    const PremultipliedImage image_2x = decodeImage(util::read_file("test/fixtures/sprites/emerald@2x.png"));
 
     // "museum_icon":{"x":354,"y":374,"width":36,"height":36,"pixelRatio":2,"sdf":false}
-    const auto sprite = createSpriteImage(image_2x, 354, 374, 36, 36, 2, false);
+    SpriteImagePtr sprite = createSpriteImage(image_2x, 354, 374, 36, 36, 2, false);
     ASSERT_TRUE(sprite.get());
-    EXPECT_EQ(18, sprite->width);
-    EXPECT_EQ(18, sprite->height);
-    EXPECT_EQ(36, sprite->pixelWidth);
-    EXPECT_EQ(36, sprite->pixelHeight);
     EXPECT_EQ(2, sprite->pixelRatio);
-    EXPECT_EQ(0x85F345098DD4F9E3u, test::crc64(sprite->data));
+    test::checkImage("test/fixtures/sprites/sprite_creation_2x", sprite->image);
 }
 
 TEST(Sprite, SpriteImageCreation1_5x) {
-    const PremultipliedImage image_2x = decodeImage(util::read_file("test/fixtures/annotations/emerald@2x.png"));
+    const PremultipliedImage image_2x = decodeImage(util::read_file("test/fixtures/sprites/emerald@2x.png"));
 
     // "museum_icon":{"x":354,"y":374,"width":36,"height":36,"pixelRatio":2,"sdf":false}
-    const auto sprite = createSpriteImage(image_2x, 354, 374, 36, 36, 1.5, false);
+    SpriteImagePtr sprite = createSpriteImage(image_2x, 354, 374, 36, 36, 1.5, false);
     ASSERT_TRUE(sprite.get());
-    EXPECT_EQ(24, sprite->width);
-    EXPECT_EQ(24, sprite->height);
-    EXPECT_EQ(36, sprite->pixelWidth);
-    EXPECT_EQ(36, sprite->pixelHeight);
     EXPECT_EQ(1.5, sprite->pixelRatio);
-    EXPECT_EQ(0x85F345098DD4F9E3u, test::crc64(sprite->data));
+    test::checkImage("test/fixtures/sprites/sprite_image_creation1_5x", sprite->image);
 
     // "hospital_icon":{"x":314,"y":518,"width":36,"height":36,"pixelRatio":2,"sdf":false}
-    const auto sprite2 = createSpriteImage(image_2x, 314, 518, 35, 35, 1.5, false);
-    ASSERT_TRUE(sprite2.get());
-    EXPECT_EQ(24, sprite2->width);
-    EXPECT_EQ(24, sprite2->height);
-    EXPECT_EQ(36, sprite2->pixelWidth);
-    EXPECT_EQ(36, sprite2->pixelHeight);
-    EXPECT_EQ(1.5, sprite2->pixelRatio);
-    EXPECT_EQ(0x134A530C742DD141u, test::crc64(sprite2->data));
+    ASSERT_FALSE(createSpriteImage(image_2x, 314, 518, 35, 35, 1.5, false));
 }
 
 TEST(Sprite, SpriteParsing) {
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
-    const auto json_1x = util::read_file("test/fixtures/annotations/emerald.json");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
+    const auto json_1x = util::read_file("test/fixtures/sprites/emerald.json");
 
     const auto images = parseSprite(image_1x, json_1x).get<Sprites>();
 
@@ -197,18 +163,14 @@ TEST(Sprite, SpriteParsing) {
               names);
 
     {
-        auto sprite = images.find("generic-metro")->second;
-        EXPECT_EQ(18, sprite->width);
-        EXPECT_EQ(18, sprite->height);
-        EXPECT_EQ(18, sprite->pixelWidth);
-        EXPECT_EQ(18, sprite->pixelHeight);
+        SpriteImagePtr sprite = images.find("generic-metro")->second;
         EXPECT_EQ(1, sprite->pixelRatio);
-        EXPECT_EQ(0xFF56F5F48F707147u, test::crc64(sprite->data));
+        test::checkImage("test/fixtures/sprites/sprite_parsing", sprite->image);
     }
 }
 
 TEST(Sprite, SpriteParsingInvalidJSON) {
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
     const auto json_1x = R"JSON({ "image": " })JSON";
 
     const auto error = parseSprite(image_1x, json_1x).get<std::string>();
@@ -220,7 +182,7 @@ TEST(Sprite, SpriteParsingInvalidJSON) {
 TEST(Sprite, SpriteParsingEmptyImage) {
     FixtureLog log;
 
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
     const auto json_1x = R"JSON({ "image": {} })JSON";
 
     const auto images = parseSprite(image_1x, json_1x).get<Sprites>();
@@ -237,7 +199,7 @@ TEST(Sprite, SpriteParsingEmptyImage) {
 TEST(Sprite, SpriteParsingSimpleWidthHeight) {
     FixtureLog log;
 
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
     const auto json_1x = R"JSON({ "image": { "width": 32, "height": 32 } })JSON";
 
     const auto images = parseSprite(image_1x, json_1x).get<Sprites>();
@@ -247,7 +209,7 @@ TEST(Sprite, SpriteParsingSimpleWidthHeight) {
 TEST(Sprite, SpriteParsingWidthTooBig) {
     FixtureLog log;
 
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
     const auto json_1x = R"JSON({ "image": { "width": 65536, "height": 32 } })JSON";
 
     const auto images = parseSprite(image_1x, json_1x).get<Sprites>();
@@ -270,7 +232,7 @@ TEST(Sprite, SpriteParsingWidthTooBig) {
 TEST(Sprite, SpriteParsingNegativeWidth) {
     FixtureLog log;
 
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
     const auto json_1x = R"JSON({ "image": { "width": -1, "height": 32 } })JSON";
 
     const auto images = parseSprite(image_1x, json_1x).get<Sprites>();
@@ -293,7 +255,7 @@ TEST(Sprite, SpriteParsingNegativeWidth) {
 TEST(Sprite, SpriteParsingNullRatio) {
     FixtureLog log;
 
-    const auto image_1x = util::read_file("test/fixtures/annotations/emerald.png");
+    const auto image_1x = util::read_file("test/fixtures/sprites/emerald.png");
     const auto json_1x = R"JSON({ "image": { "width": 32, "height": 32, "pixelRatio": 0 } })JSON";
 
     const auto images = parseSprite(image_1x, json_1x).get<Sprites>();

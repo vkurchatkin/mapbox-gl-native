@@ -103,9 +103,9 @@ void Painter::renderLine(LineBucket& bucket, const LineLayer& layer, const TileI
         bucket.drawLineSDF(*linesdfShader);
 
     } else if (!properties.pattern.value.from.empty()) {
-        mapbox::util::optional<SpriteAtlasPosition> imagePosA = spriteAtlas->getPosition(properties.pattern.value.from, true);
-        mapbox::util::optional<SpriteAtlasPosition> imagePosB = spriteAtlas->getPosition(properties.pattern.value.to, true);
-        
+        mapbox::util::optional<SpriteAtlasImage> imagePosA = spriteAtlas->getPattern(properties.pattern.value.from);
+        mapbox::util::optional<SpriteAtlasImage> imagePosB = spriteAtlas->getPattern(properties.pattern.value.to);
+
         if (!imagePosA || !imagePosB)
             return;
 
@@ -119,10 +119,10 @@ void Painter::renderLine(LineBucket& bucket, const LineLayer& layer, const TileI
         linepatternShader->u_ratio = ratio;
         linepatternShader->u_blur = blur;
 
-        linepatternShader->u_pattern_size_a = {{(*imagePosA).size[0] * factor * properties.pattern.value.fromScale, (*imagePosA).size[1]}};
+        linepatternShader->u_pattern_size_a = {{(*imagePosA).width * factor * properties.pattern.value.fromScale, (*imagePosA).height}};
         linepatternShader->u_pattern_tl_a = (*imagePosA).tl;
         linepatternShader->u_pattern_br_a = (*imagePosA).br;
-        linepatternShader->u_pattern_size_b = {{(*imagePosB).size[0] * factor * properties.pattern.value.toScale, (*imagePosB).size[1]}};
+        linepatternShader->u_pattern_size_b = {{(*imagePosB).width * factor * properties.pattern.value.toScale, (*imagePosB).height}};
         linepatternShader->u_pattern_tl_b = (*imagePosB).tl;
         linepatternShader->u_pattern_br_b = (*imagePosB).br;
         linepatternShader->u_fade = properties.pattern.value.t;

@@ -19,10 +19,10 @@ using SpriteImagePtr = std::shared_ptr<const SpriteImage>;
 
 // Extracts an individual image from a spritesheet from the given location.
 SpriteImagePtr createSpriteImage(const PremultipliedImage&,
-                                 uint16_t srcX,
-                                 uint16_t srcY,
-                                 uint16_t srcWidth,
-                                 uint16_t srcHeight,
+                                 size_t srcX,
+                                 size_t srcY,
+                                 size_t srcWidth,
+                                 size_t srcHeight,
                                  double ratio,
                                  bool sdf);
 

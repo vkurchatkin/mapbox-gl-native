@@ -60,8 +60,8 @@ void Painter::renderFill(FillBucket& bucket, const FillLayer& layer, const TileI
     }
 
     if (pattern) {
-        mapbox::util::optional<SpriteAtlasPosition> posA = spriteAtlas->getPosition(properties.pattern.value.from, true);
-        mapbox::util::optional<SpriteAtlasPosition> posB = spriteAtlas->getPosition(properties.pattern.value.to, true);
+        mapbox::util::optional<SpriteAtlasImage> posA = spriteAtlas->getPattern(properties.pattern.value.from);
+        mapbox::util::optional<SpriteAtlasImage> posB = spriteAtlas->getPattern(properties.pattern.value.to);
 
         // Image fill.
         if (pass == RenderPass::Translucent && posA && posB) {
@@ -70,13 +70,13 @@ void Painter::renderFill(FillBucket& bucket, const FillLayer& layer, const TileI
             mat3 patternMatrixA;
             matrix::identity(patternMatrixA);
             matrix::scale(patternMatrixA, patternMatrixA,
-                    1.0f / ((*posA).size[0] * factor * properties.pattern.value.fromScale),
-                    1.0f / ((*posA).size[1] * factor * properties.pattern.value.fromScale));
+                    1.0f / ((*posA).width * factor * properties.pattern.value.fromScale),
+                    1.0f / ((*posA).height * factor * properties.pattern.value.fromScale));
             mat3 patternMatrixB;
             matrix::identity(patternMatrixB);
             matrix::scale(patternMatrixB, patternMatrixB,
-                    1.0f / ((*posB).size[0] * factor * properties.pattern.value.toScale),
-                    1.0f / ((*posB).size[1] * factor * properties.pattern.value.toScale));
+                    1.0f / ((*posB).width * factor * properties.pattern.value.toScale),
+                    1.0f / ((*posB).height * factor * properties.pattern.value.toScale));
 
             config.program = patternShader->program;
             patternShader->u_matrix = vtxMatrix;

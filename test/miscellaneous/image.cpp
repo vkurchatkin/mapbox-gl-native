@@ -3,6 +3,7 @@
 #include <mbgl/util/premultiply.hpp>
 #include <mbgl/util/image.hpp>
 #include <mbgl/util/io.hpp>
+#include <mbgl/util/scaling.hpp>
 
 using namespace mbgl;
 
@@ -90,4 +91,27 @@ TEST(Image, Premultiply) {
     EXPECT_EQ(127, image.data[1]);
     EXPECT_EQ(127, image.data[2]);
     EXPECT_EQ(128, image.data[3]);
+}
+
+TEST(Image, BilinearScale) {
+    PremultipliedImage src = decodeImage(util::read_file("test/fixtures/image/sprite.png"));
+    PremultipliedImage dst { 128, 128 };
+    uint32_t *dstData = reinterpret_cast<uint32_t*>(dst.data.get());
+    std::fill(dstData, dstData + 128 * 128, 0xFFFF00FF);
+
+    util::bilinearScale(src, { 0, 0, 24, 24 }, dst, { 8, 8, 24, 24 }, false);
+    util::bilinearScale(src, { 26, 0, 24, 24 }, dst, { 0, 40, 48, 48 }, false);
+    util::bilinearScale(src, { 26, 26, 24, 24 }, dst, { 52, 40, 36, 36 }, false);
+    util::bilinearScale(src, { 26, 26, 24, 24 }, dst, { 52, 40, 36, 36 }, false);
+    util::bilinearScale(src, { 104, 0, 24, 24 }, dst, { 96, 0, 48, 48 }, false);
+    util::bilinearScale(src, { 52, 260, 24, 24 }, dst, { 108, 108, 38, 38 }, false);
+    util::bilinearScale(src, { 380, 0, 24, 24 }, dst, { 36, 0, 24, 24 }, false);
+    util::bilinearScale(src, { 396, 396, 24, 24 }, dst, { 0, 0, 50, 50 }, false);
+    util::bilinearScale(src, { 380, 182, 12, 12 }, dst, { 52, 80, 24, 24 }, false);
+
+    // From the bottom
+    util::bilinearScale(src, { 252, 380, 12, 12 }, dst, { 0, 90, 12, 12 }, false);
+    util::bilinearScale(src, { 252, 380, 12, 12 }, dst, { 18, 90, 24, 24 }, false);
+
+    test::checkImage("test/fixtures/image/bilinear_scale", dst);
 }

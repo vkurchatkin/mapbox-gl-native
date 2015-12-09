@@ -19,7 +19,9 @@ public:
     Image(size_t w, size_t h)
         : width(w),
           height(h),
-          data(std::make_unique<uint8_t[]>(size())) {}
+          data(std::make_unique<uint8_t[]>(size())) {
+        std::fill(data.get(), data.get() + size(), 0);
+    }
 
     size_t stride() const { return width * 4; }
     size_t size() const { return width * height * 4; }
