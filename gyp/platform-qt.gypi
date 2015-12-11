@@ -22,6 +22,7 @@
         '../platform/qt/async_task_impl.hpp',
         '../platform/qt/image.cpp',
         '../platform/qt/qmapboxgl.cpp',
+        '../platform/qt/qmapboxgl.qrc',
         '../platform/qt/qmapboxgl_p.hpp',
         '../platform/qt/run_loop.cpp',
         '../platform/qt/run_loop_impl.hpp',

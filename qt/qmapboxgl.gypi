@@ -50,7 +50,6 @@
         'mbgl.gyp:asset-<(asset_lib)',
         'mbgl.gyp:cache-<(cache_lib)',
         'mbgl.gyp:http-<(http_lib)',
-        'mbgl.gyp:copy_certificate_bundle',
       ],
 
       'sources': [
@@ -109,12 +108,6 @@
           ],
           'destination': '<(qtpackagedir)/lib',
         },
-        {
-          'files': [
-            '../common/ca-bundle.crt',
-          ],
-          'destination': '<(qtpackagedir)/bin',
-        },
       ],
     },
     {
@@ -133,7 +126,6 @@
           'inputs': [
             '<(qtpackagedir)/include',
             '<(qtpackagedir)/lib',
-            '<(qtpackagedir)/bin',
           ],
           'outputs': ['<(qtpackagedir).tar.gz'],
           'action': ['tar', '-C', '<(PRODUCT_DIR)', '-czvf', '<(PRODUCT_DIR)/qmapboxgl-<(qtlibversion).tar.gz', 'qmapboxgl-<(qtlibversion)'],
