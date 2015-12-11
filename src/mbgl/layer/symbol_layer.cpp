@@ -5,7 +5,7 @@
 
 namespace mbgl {
 
-std::unique_ptr<StyleLayer> SymbolLayer::clone() const {
+std::unique_ptr<Layer::Impl> SymbolLayer::clone() const {
     return std::make_unique<SymbolLayer>(*this);
 }
 

@@ -41,7 +41,7 @@ void ShapeAnnotationImpl::updateStyle(Style& style) {
         layer->source = AnnotationManager::SourceID;
         layer->sourceLayer = layer->id;
 
-        style.addLayer(std::move(layer), AnnotationManager::PointLayerID);
+        style.addLayer(std::make_unique<Layer>(std::move(layer)), AnnotationManager::PointLayerID);
 
     } else if (shape.properties.is<FillAnnotationProperties>()) {
         type = geojsonvt::ProjectedFeatureType::Polygon;
@@ -57,13 +57,13 @@ void ShapeAnnotationImpl::updateStyle(Style& style) {
         layer->source = AnnotationManager::SourceID;
         layer->sourceLayer = layer->id;
 
-        style.addLayer(std::move(layer), AnnotationManager::PointLayerID);
+        style.addLayer(std::make_unique<Layer>(std::move(layer)), AnnotationManager::PointLayerID);
 
     } else {
-        const StyleLayer* sourceLayer = style.getLayer(shape.properties.get<std::string>());
+        const Layer::Impl* sourceLayer = style.getLayer(shape.properties.get<std::string>())->impl.get();
         if (!sourceLayer) return;
 
-        std::unique_ptr<StyleLayer> layer = sourceLayer->clone();
+        std::unique_ptr<Layer::Impl> layer = sourceLayer->clone();
 
         type = layer->is<LineLayer>()
             ? geojsonvt::ProjectedFeatureType::LineString
@@ -75,7 +75,7 @@ void ShapeAnnotationImpl::updateStyle(Style& style) {
         layer->sourceLayer = layer->id;
         layer->visibility = VisibilityType::Visible;
 
-        style.addLayer(std::move(layer), sourceLayer->id);
+        style.addLayer(std::make_unique<Layer>(std::move(layer)), sourceLayer->id);
     }
 }
 

@@ -1,6 +1,7 @@
 #ifndef MBGL_STYLE_STYLE_LAYER
 #define MBGL_STYLE_STYLE_LAYER
 
+#include <mbgl/layer/layer.hpp>
 #include <mbgl/style/types.hpp>
 #include <mbgl/style/filter_expression.hpp>
 #include <mbgl/renderer/render_pass.hpp>
@@ -21,9 +22,9 @@ class Bucket;
 
 using JSVal = rapidjson::Value;
 
-class StyleLayer {
+class Layer::Impl {
 public:
-    virtual ~StyleLayer() = default;
+    virtual ~Impl() = default;
 
     // Check whether this layer is of the given subtype.
     template <class T> bool is() const { return dynamic_cast<const T*>(this); }
@@ -33,7 +34,7 @@ public:
     template <class T> const T* as() const { return dynamic_cast<const T*>(this); }
 
     // Create a copy of this layer.
-    virtual std::unique_ptr<StyleLayer> clone() const = 0;
+    virtual std::unique_ptr<Layer::Impl> clone() const = 0;
 
     virtual void parseLayout(const JSVal& value) = 0;
     virtual void parsePaints(const JSVal& value) = 0;
@@ -64,9 +65,9 @@ public:
     VisibilityType visibility = VisibilityType::Visible;
 
 protected:
-    StyleLayer() = default;
-    StyleLayer(const StyleLayer&) = default;
-    StyleLayer& operator=(const StyleLayer&) = delete;
+    Impl() = default;
+    Impl(const Impl&) = default;
+    Impl& operator=(const Impl&) = delete;
 
     // Stores what render passes this layer is currently enabled for. This depends on the
     // evaluated StyleProperties object and is updated accordingly.

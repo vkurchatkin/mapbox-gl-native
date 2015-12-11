@@ -1,13 +1,13 @@
 #ifndef MBGL_CUSTOM_LAYER
 #define MBGL_CUSTOM_LAYER
 
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 
 namespace mbgl {
 
 class StyleRenderParameters;
 
-class CustomLayer : public StyleLayer {
+class CustomLayer : public Layer::Impl {
 public:
     CustomLayer(const std::string& id);
     CustomLayer(const CustomLayer&) = default;

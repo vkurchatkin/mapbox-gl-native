@@ -4,7 +4,7 @@
 
 namespace mbgl {
 
-std::unique_ptr<StyleLayer> CircleLayer::clone() const {
+std::unique_ptr<Layer::Impl> CircleLayer::clone() const {
     return std::make_unique<CircleLayer>(*this);
 }
 

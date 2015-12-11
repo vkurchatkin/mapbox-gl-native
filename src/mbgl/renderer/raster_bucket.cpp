@@ -17,10 +17,10 @@ void RasterBucket::upload() {
 }
 
 void RasterBucket::render(Painter& painter,
-                          const StyleLayer& layer,
+                          const Layer& layer,
                           const TileID& id,
                           const mat4& matrix) {
-    painter.renderRaster(*this, *layer.as<RasterLayer>(), id, matrix);
+    painter.renderRaster(*this, *layer.impl->as<RasterLayer>(), id, matrix);
 }
 
 bool RasterBucket::setImage(PremultipliedImage image) {

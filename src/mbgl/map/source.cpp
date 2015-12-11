@@ -14,7 +14,7 @@
 #include <mbgl/util/tile_coordinate.hpp>
 #include <mbgl/util/mapbox.hpp>
 #include <mbgl/storage/file_source.hpp>
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 #include <mbgl/style/style_update_parameters.hpp>
 #include <mbgl/platform/log.hpp>
 #include <mbgl/util/std.hpp>

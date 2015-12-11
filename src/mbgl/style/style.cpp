@@ -7,7 +7,7 @@
 #include <mbgl/layer/custom_layer.hpp>
 #include <mbgl/sprite/sprite_store.hpp>
 #include <mbgl/sprite/sprite_atlas.hpp>
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 #include <mbgl/style/style_parser.hpp>
 #include <mbgl/style/property_transition.hpp>
 #include <mbgl/style/class_dictionary.hpp>
@@ -57,7 +57,7 @@ void Style::setJSON(const std::string& json, const std::string&) {
     }
 
     for (auto& layer : parser.layers) {
-        addLayer(std::move(layer));
+        addLayer(std::make_unique<Layer>(std::move(layer)));
     }
 
     glyphStore->setURL(parser.glyphURL);
@@ -81,34 +81,34 @@ void Style::addSource(std::unique_ptr<Source> source) {
     sources.emplace_back(std::move(source));
 }
 
-std::vector<std::unique_ptr<StyleLayer>> Style::getLayers() const {
-    std::vector<std::unique_ptr<StyleLayer>> result;
+std::vector<std::unique_ptr<Layer>> Style::getLayers() const {
+    std::vector<std::unique_ptr<Layer>> result;
     result.reserve(layers.size());
     for (const auto& layer : layers) {
-        result.push_back(layer->clone());
+        result.push_back(std::make_unique<Layer>(layer->impl->clone()));
     }
     return result;
 }
 
-std::vector<std::unique_ptr<StyleLayer>>::const_iterator Style::findLayer(const std::string& id) const {
+std::vector<std::unique_ptr<Layer>>::const_iterator Style::findLayer(const std::string& id) const {
     return std::find_if(layers.begin(), layers.end(), [&](const auto& layer) {
-        return layer->id == id;
+        return layer->impl->id == id;
     });
 }
 
-StyleLayer* Style::getLayer(const std::string& id) const {
+Layer* Style::getLayer(const std::string& id) const {
     auto it = findLayer(id);
     return it != layers.end() ? it->get() : nullptr;
 }
 
-void Style::addLayer(std::unique_ptr<StyleLayer> layer, mapbox::util::optional<std::string> before) {
-    if (SymbolLayer* symbolLayer = layer->as<SymbolLayer>()) {
+void Style::addLayer(std::unique_ptr<Layer> layer, mapbox::util::optional<std::string> before) {
+    if (SymbolLayer* symbolLayer = layer->impl->as<SymbolLayer>()) {
         if (!symbolLayer->spriteAtlas) {
             symbolLayer->spriteAtlas = spriteAtlas.get();
         }
     }
 
-    if (CustomLayer* customLayer = layer->as<CustomLayer>()) {
+    if (CustomLayer* customLayer = layer->impl->as<CustomLayer>()) {
         customLayer->initialize();
     }
 
@@ -164,7 +164,7 @@ void Style::cascade() {
                                                            data.getDefaultTransitionDelay() });
 
     for (const auto& layer : layers) {
-        layer->cascade(parameters);
+        layer->impl->cascade(parameters);
     }
 }
 
@@ -181,9 +181,9 @@ void Style::recalculate(float z) {
                                           data.getDefaultFadeDuration());
 
     for (const auto& layer : layers) {
-        hasPendingTransitions |= layer->recalculate(parameters);
+        hasPendingTransitions |= layer->impl->recalculate(parameters);
 
-        Source* source = getSource(layer->source);
+        Source* source = getSource(layer->impl->source);
         if (!source) {
             continue;
         }
@@ -232,10 +232,10 @@ RenderData Style::getRenderData() const {
     }
 
     for (const auto& layer : layers) {
-        if (layer->visibility == VisibilityType::None)
+        if (layer->impl->visibility == VisibilityType::None)
             continue;
 
-        if (const BackgroundLayer* background = layer->as<BackgroundLayer>()) {
+        if (const BackgroundLayer* background = layer->impl->as<BackgroundLayer>()) {
             if (background->paint.pattern.value.from.empty()) {
                 // This is a solid background. We can use glClear().
                 result.backgroundColor = background->paint.color;
@@ -250,14 +250,14 @@ RenderData Style::getRenderData() const {
             continue;
         }
 
-        if (layer->is<CustomLayer>()) {
+        if (layer->impl->is<CustomLayer>()) {
             result.order.emplace_back(*layer);
             continue;
         }
 
-        Source* source = getSource(layer->source);
+        Source* source = getSource(layer->impl->source);
         if (!source) {
-            Log::Warning(Event::Render, "can't find source for layer '%s'", layer->id.c_str());
+            Log::Warning(Event::Render, "can't find source for layer '%s'", layer->impl->id.c_str());
             continue;
         }
 
@@ -268,7 +268,7 @@ RenderData Style::getRenderData() const {
             // We're not clipping symbol layers, so when we have both parents and children of symbol
             // layers, we drop all children in favor of their parent to avoid duplicate labels.
             // See https://github.com/mapbox/mapbox-gl-native/issues/2482
-            if (layer->is<SymbolLayer>()) {
+            if (layer->impl->is<SymbolLayer>()) {
                 bool skip = false;
                 // Look back through the buckets we decided to render to find out whether there is
                 // already a bucket from this layer that is a parent of this tile. Tiles are ordered

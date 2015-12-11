@@ -126,7 +126,7 @@ void AnnotationManager::updateStyle(Style& style) {
         layer->layout.icon.allowOverlap = true;
         layer->spriteAtlas = &spriteAtlas;
 
-        style.addLayer(std::move(layer));
+        style.addLayer(std::make_unique<Layer>(std::move(layer)));
     }
 
     for (const auto& shape : shapeAnnotations) {

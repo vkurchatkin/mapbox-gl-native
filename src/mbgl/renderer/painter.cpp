@@ -9,7 +9,7 @@
 #include <mbgl/gl/debugging.hpp>
 
 #include <mbgl/style/style.hpp>
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 #include <mbgl/style/style_render_parameters.hpp>
 
 #include <mbgl/layer/background_layer.hpp>
@@ -219,9 +219,9 @@ void Painter::renderPass(RenderPass pass_,
         currentLayer = i;
 
         const auto& item = *it;
-        const StyleLayer& layer = item.layer;
+        const Layer& layer = item.layer;
 
-        if (!layer.hasRenderPass(pass))
+        if (!layer.impl->hasRenderPass(pass))
             continue;
 
         if (pass == RenderPass::Translucent) {
@@ -234,15 +234,15 @@ void Painter::renderPass(RenderPass pass_,
         config.colorMask = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
         config.stencilMask = 0x0;
 
-        if (layer.is<BackgroundLayer>()) {
+        if (layer.impl->is<BackgroundLayer>()) {
             MBGL_DEBUG_GROUP("background");
-            renderBackground(*layer.as<BackgroundLayer>());
-        } else if (layer.is<CustomLayer>()) {
-            MBGL_DEBUG_GROUP(layer.id + " - custom");
-            layer.as<CustomLayer>()->render(StyleRenderParameters(state));
+            renderBackground(*layer.impl->as<BackgroundLayer>());
+        } else if (layer.impl->is<CustomLayer>()) {
+            MBGL_DEBUG_GROUP(layer.impl->id + " - custom");
+            layer.impl->as<CustomLayer>()->render(StyleRenderParameters(state));
             config.setDirty();
         } else {
-            MBGL_DEBUG_GROUP(layer.id + " - " + std::string(item.tile->id));
+            MBGL_DEBUG_GROUP(layer.impl->id + " - " + std::string(item.tile->id));
             prepareTile(*item.tile);
             item.bucket->render(*this, layer, item.tile->id, item.tile->matrix);
         }

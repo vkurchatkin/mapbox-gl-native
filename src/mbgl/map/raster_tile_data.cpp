@@ -79,7 +79,7 @@ void RasterTileData::request(float pixelRatio,
     });
 }
 
-Bucket* RasterTileData::getBucket(StyleLayer const&) {
+Bucket* RasterTileData::getBucket(const Layer&) {
     return bucket.get();
 }
 

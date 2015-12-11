@@ -26,7 +26,7 @@
 namespace mbgl {
 
 class Style;
-class StyleLayer;
+class Layer;
 class Tile;
 class SpriteAtlas;
 class GlyphAtlas;

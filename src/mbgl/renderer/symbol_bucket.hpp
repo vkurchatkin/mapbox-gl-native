@@ -69,7 +69,7 @@ public:
     ~SymbolBucket() override;
 
     void upload() override;
-    void render(Painter&, const StyleLayer&, const TileID&, const mat4&) override;
+    void render(Painter&, const Layer&, const TileID&, const mat4&) override;
     bool hasData() const override;
     bool hasTextData() const;
     bool hasIconData() const;

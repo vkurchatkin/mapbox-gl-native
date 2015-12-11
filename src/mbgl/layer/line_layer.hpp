@@ -1,7 +1,7 @@
 #ifndef MBGL_LINE_LAYER
 #define MBGL_LINE_LAYER
 
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 #include <mbgl/style/layout_property.hpp>
 #include <mbgl/style/paint_property.hpp>
 
@@ -36,9 +36,9 @@ public:
     }
 };
 
-class LineLayer : public StyleLayer {
+class LineLayer : public Layer::Impl {
 public:
-    std::unique_ptr<StyleLayer> clone() const override;
+    std::unique_ptr<Layer::Impl> clone() const override;
 
     void parseLayout(const JSVal&) override;
     void parsePaints(const JSVal&) override;

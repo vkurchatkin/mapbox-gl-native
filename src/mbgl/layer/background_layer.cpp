@@ -3,7 +3,7 @@
 
 namespace mbgl {
 
-std::unique_ptr<StyleLayer> BackgroundLayer::clone() const {
+std::unique_ptr<Layer::Impl> BackgroundLayer::clone() const {
     return std::make_unique<BackgroundLayer>(*this);
 }
 

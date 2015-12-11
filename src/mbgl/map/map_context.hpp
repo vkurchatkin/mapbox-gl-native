@@ -56,7 +56,7 @@ public:
     void updateAnnotations();
     
     // Style API
-    void addLayer(std::unique_ptr<StyleLayer>,
+    void addLayer(std::unique_ptr<Layer>,
                   const mapbox::util::optional<std::string> before);
 
     void setSourceTileCacheSize(size_t size);

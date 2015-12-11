@@ -4,7 +4,7 @@
 
 namespace mbgl {
 
-std::unique_ptr<StyleLayer> FillLayer::clone() const {
+std::unique_ptr<Layer::Impl> FillLayer::clone() const {
     return std::make_unique<FillLayer>(*this);
 }
 

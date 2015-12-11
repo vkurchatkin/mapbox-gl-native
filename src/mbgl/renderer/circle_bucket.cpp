@@ -20,10 +20,10 @@ void CircleBucket::upload() {
 }
 
 void CircleBucket::render(Painter& painter,
-                        const StyleLayer& layer,
+                        const Layer& layer,
                         const TileID& id,
                         const mat4& matrix) {
-    painter.renderCircle(*this, *layer.as<CircleLayer>(), id, matrix);
+    painter.renderCircle(*this, *layer.impl->as<CircleLayer>(), id, matrix);
 }
 
 bool CircleBucket::hasData() const {

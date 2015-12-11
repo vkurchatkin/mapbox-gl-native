@@ -5,7 +5,7 @@
 
 namespace mbgl {
 
-std::unique_ptr<StyleLayer> LineLayer::clone() const {
+std::unique_ptr<Layer::Impl> LineLayer::clone() const {
     return std::make_unique<LineLayer>(*this);
 }
 

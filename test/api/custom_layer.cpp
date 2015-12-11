@@ -59,7 +59,7 @@ public:
         MBGL_CHECK_ERROR(glDrawArrays(GL_TRIANGLE_STRIP, 0, 4));
     }
 
-    std::unique_ptr<StyleLayer> clone() const override {
+    std::unique_ptr<Layer::Impl> clone() const override {
         return std::make_unique<TestLayer>(*this);
     }
 

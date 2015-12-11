@@ -8,7 +8,7 @@ namespace mbgl {
 
 class SourceInfo;
 class FileRequest;
-class StyleLayer;
+class Layer;
 class TexturePool;
 class WorkRequest;
 
@@ -24,7 +24,7 @@ public:
 
     void cancel() override;
 
-    Bucket* getBucket(StyleLayer const &layer_desc) override;
+    Bucket* getBucket(const Layer&) override;
 
 private:
     TexturePool& texturePool;

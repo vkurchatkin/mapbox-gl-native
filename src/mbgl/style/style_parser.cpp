@@ -141,7 +141,7 @@ void StyleParser::parseLayers(const JSVal& value) {
             continue;
         }
 
-        layersMap.emplace(layerID, std::pair<const JSVal&, std::unique_ptr<StyleLayer>> { layerValue, nullptr });
+        layersMap.emplace(layerID, std::pair<const JSVal&, std::unique_ptr<Layer::Impl>> { layerValue, nullptr });
         ids.push_back(layerID);
     }
 
@@ -162,7 +162,7 @@ void StyleParser::parseLayers(const JSVal& value) {
     }
 }
 
-void StyleParser::parseLayer(const std::string& id, const JSVal& value, std::unique_ptr<StyleLayer>& layer) {
+void StyleParser::parseLayer(const std::string& id, const JSVal& value, std::unique_ptr<Layer::Impl>& layer) {
     if (layer) {
         // Skip parsing this again. We already have a valid layer definition.
         return;
@@ -196,7 +196,7 @@ void StyleParser::parseLayer(const std::string& id, const JSVal& value, std::uni
                    it->second.second);
         stack.pop_front();
 
-        StyleLayer* reference = it->second.second.get();
+        Layer::Impl* reference = it->second.second.get();
         if (!reference) {
             return;
         }
@@ -292,7 +292,7 @@ void StyleParser::parseLayer(const std::string& id, const JSVal& value, std::uni
     layer->parsePaints(value);
 }
 
-void StyleParser::parseVisibility(StyleLayer& layer, const JSVal& value) {
+void StyleParser::parseVisibility(Layer::Impl& layer, const JSVal& value) {
     if (!value.HasMember("visibility")) {
         return;
     } else if (!value["visibility"].IsString()) {

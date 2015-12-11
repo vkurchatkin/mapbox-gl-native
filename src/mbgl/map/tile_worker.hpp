@@ -22,7 +22,7 @@ class SpriteStore;
 class GlyphAtlas;
 class GlyphStore;
 class Bucket;
-class StyleLayer;
+class Layer;
 class SymbolLayer;
 
 // We're using this class to shuttle the resulting buckets from the worker thread to the MapContext
@@ -46,7 +46,7 @@ public:
                const std::atomic<TileData::State>&);
     ~TileWorker();
 
-    TileParseResult parseAllLayers(std::vector<std::unique_ptr<StyleLayer>>,
+    TileParseResult parseAllLayers(std::vector<std::unique_ptr<Layer>>,
                                    const GeometryTile&,
                                    PlacementConfig);
 
@@ -56,7 +56,7 @@ public:
                        PlacementConfig);
 
 private:
-    void parseLayer(const StyleLayer*, const GeometryTile&);
+    void parseLayer(const Layer*, const GeometryTile&);
     void insertBucket(const std::string& name, std::unique_ptr<Bucket>);
 
     const TileID id;
@@ -69,7 +69,7 @@ private:
 
     bool partialParse = false;
 
-    std::vector<std::unique_ptr<StyleLayer>> layers;
+    std::vector<std::unique_ptr<Layer>> layers;
     std::unique_ptr<CollisionTile> collisionTile;
 
     // Contains buckets that we couldn't parse so far due to missing resources.

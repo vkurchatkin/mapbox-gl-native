@@ -1,7 +1,7 @@
 #include <mbgl/text/collision_tile.hpp>
 #include <mbgl/map/tile_worker.hpp>
 #include <mbgl/map/geometry_tile.hpp>
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 #include <mbgl/style/style_bucket_parameters.hpp>
 #include <mbgl/layer/background_layer.hpp>
 #include <mbgl/layer/custom_layer.hpp>
@@ -34,7 +34,7 @@ TileWorker::~TileWorker() {
     glyphAtlas.removeGlyphs(reinterpret_cast<uintptr_t>(this));
 }
 
-TileParseResult TileWorker::parseAllLayers(std::vector<std::unique_ptr<StyleLayer>> layers_,
+TileParseResult TileWorker::parseAllLayers(std::vector<std::unique_ptr<Layer>> layers_,
                                            const GeometryTile& geometryTile,
                                            PlacementConfig config) {
     // We're doing a fresh parse of the tile, because the underlying data has changed.
@@ -52,9 +52,9 @@ TileParseResult TileWorker::parseAllLayers(std::vector<std::unique_ptr<StyleLaye
     std::set<std::string> parsed;
 
     for (auto i = layers.rbegin(); i != layers.rend(); i++) {
-        const StyleLayer* layer = i->get();
-        if (parsed.find(layer->bucketName()) == parsed.end()) {
-            parsed.emplace(layer->bucketName());
+        const Layer* layer = i->get();
+        if (parsed.find(layer->impl->bucketName()) == parsed.end()) {
+            parsed.emplace(layer->impl->bucketName());
             parseLayer(layer, geometryTile);
         }
     }
@@ -98,36 +98,36 @@ void TileWorker::redoPlacement(
     collisionTile = std::make_unique<CollisionTile>(config);
 
     for (auto i = layers.rbegin(); i != layers.rend(); i++) {
-        const auto it = buckets->find((*i)->id);
+        const auto it = buckets->find((*i)->impl->id);
         if (it != buckets->end()) {
             it->second->placeFeatures(*collisionTile);
         }
     }
 }
 
-void TileWorker::parseLayer(const StyleLayer* layer, const GeometryTile& geometryTile) {
+void TileWorker::parseLayer(const Layer* layer, const GeometryTile& geometryTile) {
     // Cancel early when parsing.
     if (state == TileData::State::obsolete)
         return;
 
     // Background and custom layers are special cases.
-    if (layer->is<BackgroundLayer>() || layer->is<CustomLayer>())
+    if (layer->impl->is<BackgroundLayer>() || layer->impl->is<CustomLayer>())
         return;
 
     // Skip this bucket if we are to not render this
-    if ((layer->source != sourceID) ||
-        (id.z < std::floor(layer->minZoom)) ||
-        (id.z >= std::ceil(layer->maxZoom)) ||
-        (layer->visibility == VisibilityType::None)) {
+    if ((layer->impl->source != sourceID) ||
+        (id.z < std::floor(layer->impl->minZoom)) ||
+        (id.z >= std::ceil(layer->impl->maxZoom)) ||
+        (layer->impl->visibility == VisibilityType::None)) {
         return;
     }
 
-    auto geometryLayer = geometryTile.getLayer(layer->sourceLayer);
+    auto geometryLayer = geometryTile.getLayer(layer->impl->sourceLayer);
     if (!geometryLayer) {
         // The layer specified in the bucket does not exist. Do nothing.
         if (debug::tileParseWarnings) {
             Log::Warning(Event::ParseTile, "layer '%s' does not exist in tile %d/%d/%d",
-                    layer->sourceLayer.c_str(), id.z, id.x, id.y);
+                    layer->impl->sourceLayer.c_str(), id.z, id.x, id.y);
         }
         return;
     }
@@ -142,13 +142,13 @@ void TileWorker::parseLayer(const StyleLayer* layer, const GeometryTile& geometr
                                      glyphStore,
                                      *collisionTile);
 
-    std::unique_ptr<Bucket> bucket = layer->createBucket(parameters);
+    std::unique_ptr<Bucket> bucket = layer->impl->createBucket(parameters);
 
-    if (layer->is<SymbolLayer>() && partialParse) {
+    if (layer->impl->is<SymbolLayer>() && partialParse) {
         // We cannot parse this bucket yet. Instead, we're saving it for later.
-        pending.emplace_back(layer->as<SymbolLayer>(), std::move(bucket));
+        pending.emplace_back(layer->impl->as<SymbolLayer>(), std::move(bucket));
     } else {
-        insertBucket(layer->bucketName(), std::move(bucket));
+        insertBucket(layer->impl->bucketName(), std::move(bucket));
     }
 }
 

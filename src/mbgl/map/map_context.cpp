@@ -11,7 +11,7 @@
 #include <mbgl/storage/response.hpp>
 
 #include <mbgl/style/style.hpp>
-#include <mbgl/style/style_layer.hpp>
+#include <mbgl/layer/layer_impl.hpp>
 
 #include <mbgl/sprite/sprite_atlas.hpp>
 #include <mbgl/sprite/sprite_store.hpp>
@@ -278,7 +278,7 @@ double MapContext::getTopOffsetPixelsForAnnotationIcon(const std::string& name) 
     return data.getAnnotationManager()->getTopOffsetPixelsForIcon(name);
 }
 
-void MapContext::addLayer(std::unique_ptr<StyleLayer> layer, mapbox::util::optional<std::string> after) {
+void MapContext::addLayer(std::unique_ptr<Layer> layer, mapbox::util::optional<std::string> after) {
     style->addLayer(std::move(layer), after);
 }
 

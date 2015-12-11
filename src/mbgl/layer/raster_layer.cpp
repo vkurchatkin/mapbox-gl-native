@@ -3,7 +3,7 @@
 
 namespace mbgl {
 
-std::unique_ptr<StyleLayer> RasterLayer::clone() const {
+std::unique_ptr<Layer::Impl> RasterLayer::clone() const {
     return std::make_unique<RasterLayer>(*this);
 }
 

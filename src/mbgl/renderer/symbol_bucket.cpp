@@ -75,10 +75,10 @@ void SymbolBucket::upload() {
 }
 
 void SymbolBucket::render(Painter& painter,
-                          const StyleLayer& layer,
+                          const Layer& layer,
                           const TileID& id,
                           const mat4& matrix) {
-    painter.renderSymbol(*this, *layer.as<SymbolLayer>(), id, matrix);
+    painter.renderSymbol(*this, *layer.impl->as<SymbolLayer>(), id, matrix);
 }
 
 bool SymbolBucket::hasData() const { return hasTextData() || hasIconData() || !symbolInstances.empty(); }

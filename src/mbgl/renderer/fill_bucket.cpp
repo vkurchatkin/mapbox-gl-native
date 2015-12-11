@@ -196,10 +196,10 @@ void FillBucket::upload() {
 }
 
 void FillBucket::render(Painter& painter,
-                        const StyleLayer& layer,
+                        const Layer& layer,
                         const TileID& id,
                         const mat4& matrix) {
-    painter.renderFill(*this, *layer.as<FillLayer>(), id, matrix);
+    painter.renderFill(*this, *layer.impl->as<FillLayer>(), id, matrix);
 }
 
 bool FillBucket::hasData() const {

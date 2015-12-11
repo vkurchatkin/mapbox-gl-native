@@ -387,10 +387,10 @@ void LineBucket::upload() {
 }
 
 void LineBucket::render(Painter& painter,
-                        const StyleLayer& layer,
+                        const Layer& layer,
                         const TileID& id,
                         const mat4& matrix) {
-    painter.renderLine(*this, *layer.as<LineLayer>(), id, matrix);
+    painter.renderLine(*this, *layer.impl->as<LineLayer>(), id, matrix);
 }
 
 bool LineBucket::hasData() const {
