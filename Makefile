@@ -14,7 +14,7 @@ $(error Cannot determine build platform)
 endif
 export BUILD_VERSION = $(shell uname -m)
 
-RUN =  +@$(MAKE) -f scripts/main.mk
+RUN =  +$(MAKE) -f scripts/main.mk
 
 default: ; @printf "You must specify a valid target\n"
 
@@ -110,8 +110,10 @@ nproj:
 	@open ./build/binding.xcodeproj
 
 .PHONY: test
-test: ; $(RUN) Makefile/test
-test-%: ; $(RUN) test-$*
+test:
+	$(RUN) Makefile/test
+test-%:
+	$(RUN) test-$*
 ifeq ($(BUILD),osx)
 xtest: ; $(RUN) HOST=osx HOST_VERSION=x86_64 Xcode/test
 endif

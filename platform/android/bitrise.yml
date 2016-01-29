@@ -24,25 +24,17 @@ workflows:
                 envman add --key SKIPCI --value false
             fi
     - script:
-        title: Install Linux Dependencies
+        title: Run Build
+        run_if: '{{enveq "SKIPCI" "false"}}'
         inputs:
         - content: |-
             #!/bin/bash
+            set -e
+            set -o pipefail
 
             apt-get install -y pkg-config
-    - script:
-        title: Build Android SDK For arm
-        inputs:
-        - content: |-
-            #!/bin/bash
-
             make android -j4
-        - is_debug: 'yes'
-    - script:
-        title: Run Unit Tests
-        inputs:
-        - content: |-
-            #!/bin/bash
+            BUILDTYPE=Debug HOST=android make -j4 test-*
 
             cd platform/android
             ./gradlew testReleaseUnitTest --continue
