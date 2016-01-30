@@ -3,6 +3,7 @@
 
 #include <mbgl/map/geometry_tile.hpp>
 #include <mbgl/map/tile_id.hpp>
+#include <mbgl/util/constants.hpp>
 
 #include <map>
 #include <unordered_map>
@@ -17,7 +18,7 @@ public:
     FeatureType getType() const override { return type; }
     optional<Value> getValue(const std::string&) const override;
     GeometryCollection getGeometries() const override { return geometries; }
-    uint32_t getExtent() const override { return 4096; }
+    uint32_t getExtent() const override { return util::EXTENT; }
 
     const FeatureType type;
     const std::unordered_map<std::string, std::string> properties;
