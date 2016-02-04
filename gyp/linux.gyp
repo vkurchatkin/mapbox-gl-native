@@ -1,6 +1,6 @@
 {
   'includes': [
-    '../platform/linux/mapboxgl-app.gypi',
+    '../platform/glfw/mapboxgl-app.gypi',
   ],
 
   'conditions': [

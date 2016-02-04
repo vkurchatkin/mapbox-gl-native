@@ -1,7 +1,7 @@
 {
   'targets': [
-    { 'target_name': 'platform-linux',
-      'product_name': 'mbgl-platform-linux',
+    { 'target_name': 'platform-glfw',
+      'product_name': 'mbgl-platform-glfw',
       'type': 'static_library',
       'standalone_static_library': 1,
       'hard_dependency': 1,

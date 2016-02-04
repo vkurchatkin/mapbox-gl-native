@@ -36,11 +36,11 @@ Set the environment variable `MAPBOX_ACCESS_TOKEN` to your [Mapbox access token]
 Then, you can then proceed to build the library:
 
     git submodule update --init
-    make linux
+    make glfw
 
 Set an access token as described below, and then run:
 
-    make run-linux
+    make run-glfw
 
 ### Test
 

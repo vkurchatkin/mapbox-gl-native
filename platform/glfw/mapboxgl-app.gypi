@@ -3,7 +3,7 @@
     '../../gyp/common.gypi',
   ],
   'targets': [
-    { 'target_name': 'linuxapp',
+    { 'target_name': 'glfwapp',
       'product_name': 'mapbox-gl',
       'type': 'executable',
 

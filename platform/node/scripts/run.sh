@@ -3,7 +3,11 @@
 set -e
 set -o pipefail
 
-source ./platform/${TRAVIS_OS_NAME}/scripts/setup.sh
+if [[ ${TRAVIS_OS_NAME} == "linux" ]]; then
+    source ./platform/glfw/scripts/setup.sh
+else
+    source ./platform/${TRAVIS_OS_NAME}/scripts/setup.sh
+fi
 
 BUILDTYPE=${BUILDTYPE:-Release}
 

@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-source ./platform/linux/scripts/setup.sh
+source ./platform/glfw/scripts/setup.sh
 
 BUILDTYPE=${BUILDTYPE:-Release}
 
@@ -12,7 +12,7 @@ BUILDTYPE=${BUILDTYPE:-Release}
 ################################################################################
 
 mapbox_time "compile_program" \
-make linux -j${JOBS} BUILDTYPE=${BUILDTYPE}
+make glfw -j${JOBS} BUILDTYPE=${BUILDTYPE}
 
 mapbox_time "compile_render_binary" \
 make render -j${JOBS} BUILDTYPE=${BUILDTYPE}
