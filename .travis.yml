@@ -1,0 +1,48 @@
+language: cpp
+
+sudo: false
+
+# Save common build configurations as shortcuts, so we can reference them later.
+addons_shortcuts:
+  addons_clang37: &clang37
+    apt:
+      sources: [ 'ubuntu-toolchain-r-test', 'llvm-toolchain-precise-3.7', 'george-edison55-precise-backports' ]
+      packages: [ 'clang-3.7', 'cmake', 'cmake-data' ]
+
+matrix:
+  exclude:
+    - os: linux
+  include:
+    - os: linux
+      compiler: "clang++-3.7"
+      env: BUILDTYPE=Debug CXX=clang++-3.7 CC=clang-3.7
+      addons: *clang37
+
+cache:
+  directories:
+    - $HOME/.ccache
+    - $HOME/.cache/pip
+    - $HOME/build/mapbox/mapbox-gl-native/.binaries
+    - $HOME/build/mapbox/mapbox-gl-native/.scripts
+
+env:
+  global:
+    - TERM: dumb
+
+before_install:
+- cmake --version
+- echo ${CXX}
+- ${CXX} -v
+- ${CC} -v
+- c++ -v
+- cc -v
+- clang++ -v
+- clang -v
+- g++ -v
+- gcc -v
+
+install:
+-
+
+script:
+-
