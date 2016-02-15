@@ -68,11 +68,11 @@ private:
 
     optional<Response> getTile(const Resource::TileData&);
     void putTile(const Resource::TileData&, const Response&,
-                 const std::string&, bool compressed);
+                 const std::string*, bool compressed);
 
     optional<Response> getResource(const Resource&);
     void putResource(const Resource&, const Response&,
-                     const std::string&, bool compressed);
+                     const std::string*, bool compressed);
 
     uint64_t putInternal(const Resource&, const Response&, bool evict);
     void markUsed(int64_t regionID, const Resource&);

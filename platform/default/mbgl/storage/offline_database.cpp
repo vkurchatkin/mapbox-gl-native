@@ -137,11 +137,11 @@ uint64_t OfflineDatabase::putInternal(const Resource& resource, const Response& 
     if (resource.kind == Resource::Kind::Tile) {
         assert(resource.tileData);
         putTile(*resource.tileData, response,
-                compressed ? compressedData : *response.data,
+                compressed ? &compressedData : response.data.get(),
                 compressed);
     } else {
         putResource(resource, response,
-                compressed ? compressedData : *response.data,
+                compressed ? &compressedData : response.data.get(),
                 compressed);
     }
 
@@ -188,7 +188,7 @@ optional<Response> OfflineDatabase::getResource(const Resource& resource) {
 
 void OfflineDatabase::putResource(const Resource& resource,
                                   const Response& response,
-                                  const std::string& data,
+                                  const std::string* data,
                                   bool compressed) {
     if (response.notModified) {
         Statement stmt = getStatement(
@@ -217,7 +217,7 @@ void OfflineDatabase::putResource(const Resource& resource,
             stmt->bind(7, nullptr);
             stmt->bind(8, false);
         } else {
-            stmt->bindBlob(7, data.data(), data.size(), false);
+            stmt->bindBlob(7, data->data(), data->size(), false);
             stmt->bind(8, compressed);
         }
 
@@ -283,7 +283,7 @@ optional<Response> OfflineDatabase::getTile(const Resource::TileData& tile) {
 
 void OfflineDatabase::putTile(const Resource::TileData& tile,
                               const Response& response,
-                              const std::string& data,
+                              const std::string* data,
                               bool compressed) {
     if (response.notModified) {
         Statement stmt = getStatement(
@@ -323,7 +323,7 @@ void OfflineDatabase::putTile(const Resource::TileData& tile,
             stmt2->bind(10, nullptr);
             stmt2->bind(11, false);
         } else {
-            stmt2->bindBlob(10, data.data(), data.size(), false);
+            stmt2->bindBlob(10, data->data(), data->size(), false);
             stmt2->bind(11, compressed);
         }
 
