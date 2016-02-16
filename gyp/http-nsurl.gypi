@@ -7,7 +7,7 @@
       'hard_dependency': 1,
 
       'sources': [
-        '../platform/darwin/src/http_request_nsurl.mm',
+        '../platform/darwin/src/http_file_source.mm',
       ],
 
       'include_dirs': [

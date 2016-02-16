@@ -7,7 +7,7 @@
       'hard_dependency': 1,
 
       'sources': [
-        '../platform/default/http_request_curl.cpp',
+        '../platform/default/http_file_source.cpp',
       ],
 
       'include_dirs': [
