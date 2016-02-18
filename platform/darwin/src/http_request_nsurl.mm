@@ -129,6 +129,9 @@ NSString *HTTPNSURLContext::getUserAgent() {
 #elif TARGET_OS_TV
     systemName = @"tvOS";
 #endif
+#if TARGET_OS_SIMULATOR
+    systemName = [systemName stringByAppendingString:@" Simulator"];
+#endif
     NSString *systemVersion = nil;
     if ([NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)]) {
         NSOperatingSystemVersion osVersion = [NSProcessInfo processInfo].operatingSystemVersion;
