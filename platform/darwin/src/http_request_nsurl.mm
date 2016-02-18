@@ -95,9 +95,8 @@ NSString *HTTPNSURLContext::getUserAgent() {
     
     NSBundle *appBundle = [NSBundle mainBundle];
     if (appBundle) {
-        NSString *bundleName = appBundle.infoDictionary[@"CFBundleName"];
         [userAgentComponents addObject:[NSString stringWithFormat:@"%@/%@",
-                                        [bundleName stringByReplacingOccurrencesOfString:@" " withString:@""],
+                                        appBundle.infoDictionary[@"CFBundleName"],
                                         appBundle.infoDictionary[@"CFBundleShortVersionString"]]];
     } else {
         [userAgentComponents addObject:[NSProcessInfo processInfo].processName];
@@ -124,13 +123,11 @@ NSString *HTTPNSURLContext::getUserAgent() {
 #if TARGET_OS_IPHONE
     systemName = @"iOS";
 #elif TARGET_OS_MAC
-    systemName = @"OSX";
+    systemName = @"OS X";
 #elif TARGET_OS_WATCH
     systemName = @"watchOS";
 #elif TARGET_OS_TV
     systemName = @"tvOS";
-#elif TARGET_OS_SIMULATOR
-    systemName = @"Simulator";
 #endif
     NSString *systemVersion = nil;
     if ([NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)]) {
