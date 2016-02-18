@@ -51,6 +51,8 @@ Known issues:
 
 ## iOS master
 
+- A more specific user agent string is now sent with style and tile requests. ([#4012](https://github.com/mapbox/mapbox-gl-native/pull/4012))
+
 ## iOS 3.1.0
 
 - The SDK is now distributed as a dynamic framework instead of a static library, resulting in a simpler installation workflow and significantly reduced download size. The framework contains both simulator and device content; due to [an Xcode bug](http://www.openradar.me/radar?id=6409498411401216), you’ll need to strip out the simulator content before submitting your application to the App Store. ([#3183](https://github.com/mapbox/mapbox-gl-native/pull/3183))
