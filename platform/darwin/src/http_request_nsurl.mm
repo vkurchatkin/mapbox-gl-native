@@ -120,6 +120,18 @@ NSString *HTTPNSURLContext::getUserAgent() {
     [userAgentComponents addObject:[NSString stringWithFormat:@"MapboxGL/%@ (%@)",
                                     CFSTR(MBGL_VERSION_STRING), CFSTR(MBGL_VERSION_REV)]];
     
+    NSString *systemName = @"Darwin";
+#if TARGET_OS_IPHONE
+    systemName = @"iOS";
+#elif TARGET_OS_MAC
+    systemName = @"OSX";
+#elif TARGET_OS_WATCH
+    systemName = @"watchOS";
+#elif TARGET_OS_TV
+    systemName = @"tvOS";
+#elif TARGET_OS_SIMULATOR
+    systemName = @"Simulator";
+#endif
     NSString *systemVersion = nil;
     if ([NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)]) {
         NSOperatingSystemVersion osVersion = [NSProcessInfo processInfo].operatingSystemVersion;
@@ -127,7 +139,21 @@ NSString *HTTPNSURLContext::getUserAgent() {
                          (long)osVersion.majorVersion, (long)osVersion.minorVersion, (long)osVersion.patchVersion];
     }
     if (systemVersion) {
-        [userAgentComponents addObject:[NSString stringWithFormat:@"Darwin/%@", systemVersion]];
+        [userAgentComponents addObject:[NSString stringWithFormat:@"%@/%@", systemName, systemVersion]];
+    }
+    
+    NSString *cpu = nil;
+#if TARGET_CPU_X86
+    cpu = @"x86";
+#elif TARGET_CPU_X86_64
+    cpu = @"x86_64";
+#elif TARGET_CPU_ARM
+    cpu = @"arm";
+#elif TARGET_CPU_ARM64
+    cpu = @"arm64";
+#endif
+    if (cpu) {
+        [userAgentComponents addObject:[NSString stringWithFormat:@"(%@)", cpu]];
     }
     
     return [userAgentComponents componentsJoinedByString:@" "];
