@@ -6,11 +6,19 @@
 #include <mbgl/util/async_task.hpp>
 #include <mbgl/util/run_loop.hpp>
 
+#include "version.hpp"
+
 #import <Foundation/Foundation.h>
 
 #include <map>
 #include <cassert>
 #include <mutex>
+
+@interface MBGLBundleCanary : NSObject
+@end
+
+@implementation MBGLBundleCanary
+@end
 
 namespace mbgl {
 
@@ -46,6 +54,10 @@ public:
     NSURLSession *session = nil;
     NSString *userAgent = nil;
     NSInteger accountType = 0;
+
+private:
+    NSString *getUserAgent();
+    NSBundle *getSDKBundle();
 };
 
 HTTPNSURLContext::HTTPNSURLContext() {
@@ -60,8 +72,7 @@ HTTPNSURLContext::HTTPNSURLContext() {
         session = [NSURLSession sessionWithConfiguration:sessionConfig];
         [session retain];
 
-        // Write user agent string
-        userAgent = @"MapboxGL";
+        userAgent = HTTPNSURLContext::getUserAgent();
 
         accountType = [[NSUserDefaults standardUserDefaults] integerForKey:@"MGLMapboxAccountType"];
     }
@@ -77,6 +88,60 @@ HTTPNSURLContext::~HTTPNSURLContext() {
 
 HTTPRequestBase* HTTPNSURLContext::createRequest(const Resource& resource, HTTPRequestBase::Callback callback) {
     return new HTTPNSURLRequest(this, resource, callback);
+}
+
+NSString *HTTPNSURLContext::getUserAgent() {
+    NSMutableArray *userAgentComponents = [NSMutableArray array];
+    
+    NSBundle *appBundle = [NSBundle mainBundle];
+    if (appBundle) {
+        NSString *bundleName = appBundle.infoDictionary[@"CFBundleName"];
+        [userAgentComponents addObject:[NSString stringWithFormat:@"%@/%@",
+                                        [bundleName stringByReplacingOccurrencesOfString:@" " withString:@""],
+                                        appBundle.infoDictionary[@"CFBundleShortVersionString"]]];
+    } else {
+        [userAgentComponents addObject:[NSProcessInfo processInfo].processName];
+    }
+    
+    NSBundle *sdkBundle = HTTPNSURLContext::getSDKBundle();
+    if (sdkBundle) {
+        NSString *versionString = sdkBundle.infoDictionary[@"MGLSemanticVersionString"];
+        if (!versionString) {
+            versionString = sdkBundle.infoDictionary[@"CFBundleShortVersionString"];
+        }
+        if (versionString) {
+            [userAgentComponents addObject:[NSString stringWithFormat:@"%@/%@",
+                                            sdkBundle.infoDictionary[@"CFBundleName"], versionString]];
+        }
+    }
+    
+    // Avoid %s here because it inserts hidden bidirectional markers on OS X when the system
+    // language is set to a right-to-left language.
+    [userAgentComponents addObject:[NSString stringWithFormat:@"MapboxGL/%@ (%@)",
+                                    CFSTR(MBGL_VERSION_STRING), CFSTR(MBGL_VERSION_REV)]];
+    
+    NSString *systemVersion = nil;
+    if ([NSProcessInfo instancesRespondToSelector:@selector(operatingSystemVersion)]) {
+        NSOperatingSystemVersion osVersion = [NSProcessInfo processInfo].operatingSystemVersion;
+        systemVersion = [NSString stringWithFormat:@"%ld.%ld.%ld",
+                         (long)osVersion.majorVersion, (long)osVersion.minorVersion, (long)osVersion.patchVersion];
+    }
+    if (systemVersion) {
+        [userAgentComponents addObject:[NSString stringWithFormat:@"Darwin/%@", systemVersion]];
+    }
+    
+    return [userAgentComponents componentsJoinedByString:@" "];
+}
+
+NSBundle *HTTPNSURLContext::getSDKBundle() {
+    NSBundle *bundle = [NSBundle bundleForClass:[MBGLBundleCanary class]];
+    if (bundle && ![bundle.infoDictionary[@"CFBundlePackageType"] isEqualToString:@"FMWK"]) {
+        // For static frameworks, the class is contained in the application bundle rather than the
+        // framework bundle.
+        bundle = [NSBundle bundleWithPath:[bundle.privateFrameworksPath
+                                           stringByAppendingPathComponent:@"Mapbox.framework"]];
+    }
+    return bundle;
 }
 
 // -------------------------------------------------------------------------------------------------
