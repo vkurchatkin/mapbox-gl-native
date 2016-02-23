@@ -59,6 +59,7 @@
         'api/set_style.cpp',
         'api/custom_layer.cpp',
         'api/offline.cpp',
+        'api/earcut_crash.cpp',
 
         'geometry/binpack.cpp',
 
