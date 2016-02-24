@@ -10,7 +10,7 @@
 
 #include <future>
 
-TEST(API, EarcutCrash) {
+TEST(API, Earcut) {
     using namespace mbgl;
 
     const auto style = util::read_file("test/fixtures/api/earcut-crash.json");

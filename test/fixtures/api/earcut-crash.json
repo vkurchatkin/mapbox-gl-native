@@ -1,1 +1,26 @@
-{"version":8,"name":"EarcutCrash","sources":{"parcels-simple":{"url":"asset://parcels-simple.json","type":"vector"}},"layers":[{"layout":{"visibility":"visible"},"type":"fill","source":"parcels-simple","id":"parcels-simple","paint":{"fill-outline-color":"rgba(0,149,255,1)"},"source-layer":"parcels_simple","interactive":true}]}
+{
+  "version": 8,
+  "center": [
+    145,
+    -38
+  ],
+  "zoom": 5,
+  "sources": {
+    "parcels-simple": {
+      "type": "vector",
+      "tiles": [ "asset://parcels-simple/{z}-{x}-{y}.vector.pbf" ]
+    }
+  },
+  "layers": [{
+    "layout": {
+      "visibility": "visible"
+    },
+    "type": "fill",
+    "source": "parcels-simple",
+    "id": "parcels-simple",
+    "paint": {
+      "fill-outline-color": "rgba(0,149,255,1)"
+    },
+    "source-layer": "parcels_simple"
+  }]
+}
