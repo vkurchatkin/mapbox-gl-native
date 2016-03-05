@@ -66,6 +66,7 @@ import com.mapbox.mapboxsdk.annotations.IconFactory;
 import com.mapbox.mapboxsdk.annotations.InfoWindow;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.Polygon;
+import com.mapbox.mapboxsdk.annotations.PolygonOptions;
 import com.mapbox.mapboxsdk.annotations.Polyline;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
@@ -120,7 +121,10 @@ public class MapView extends FrameLayout {
     private static final float DIMENSION_SEVENTY_SIX_DP = 76f;
 
     private MapboxMap mMapboxMap;
+
     private List<Icon> mIcons;
+    private int mAverageIconHeight;
+    private int mAverageIconWidth;
 
     private NativeMapView mNativeMapView;
     private CompassView mCompassView;
@@ -851,8 +855,10 @@ public class MapView extends FrameLayout {
         Icon icon = marker.getIcon();
         if (icon == null) {
             icon = IconFactory.getInstance(getContext()).defaultMarker();
+            marker.setTopOffsetPixels(icon.getBitmap().getHeight()*3);
             marker.setIcon(icon);
         }
+
         if (!mIcons.contains(icon)) {
             mIcons.add(icon);
             loadIcon(icon);
@@ -878,7 +884,13 @@ public class MapView extends FrameLayout {
         if (density == Bitmap.DENSITY_NONE) {
             density = DisplayMetrics.DENSITY_DEFAULT;
         }
+
         float scale = density / DisplayMetrics.DENSITY_DEFAULT;
+        Log.v(MapboxConstants.TAG, "BEFORE: width:" + mAverageIconWidth + " " + mAverageIconHeight);
+        Log.v(MapboxConstants.TAG, "NEW: width:" + bitmap.getWidth() + " " + bitmap.getHeight());
+        mAverageIconHeight = mAverageIconHeight + (bitmap.getHeight() - mAverageIconHeight) / mIcons.size();
+        mAverageIconWidth = mAverageIconHeight + (bitmap.getWidth() - mAverageIconHeight) / mIcons.size();
+        Log.v(MapboxConstants.TAG, "AFTER: " + mAverageIconWidth + " " + mAverageIconHeight);
 
         mNativeMapView.addAnnotationIcon(
                 id,
@@ -1415,18 +1427,20 @@ public class MapView extends FrameLayout {
 
             List<Marker> selectedMarkers = mMapboxMap.getSelectedMarkers();
 
-            final float toleranceSides = 15 * mScreenDensity;
-            final float toleranceTop = 20 * mScreenDensity;
-            final float toleranceBottom = 5 * mScreenDensity;
-
-            RectF tapRect = new RectF(tapPoint.x - toleranceSides, tapPoint.y + toleranceTop,
-                    tapPoint.x + toleranceSides, tapPoint.y - toleranceBottom);
+            RectF tapRect = new RectF(tapPoint.x - mAverageIconWidth/2, tapPoint.y - mAverageIconHeight / 2,
+                    tapPoint.x + mAverageIconWidth/2, tapPoint.y + mAverageIconHeight / 2);
 
             LatLngBounds.Builder builder = new LatLngBounds.Builder();
             builder.include(fromScreenLocation(new PointF(tapRect.left, tapRect.bottom)));
             builder.include(fromScreenLocation(new PointF(tapRect.left, tapRect.top)));
             builder.include(fromScreenLocation(new PointF(tapRect.right, tapRect.top)));
             builder.include(fromScreenLocation(new PointF(tapRect.right, tapRect.bottom)));
+
+            mMapboxMap.addPolygon(new PolygonOptions()
+                    .add(fromScreenLocation(new PointF(tapRect.left, tapRect.bottom)))
+                    .add(fromScreenLocation(new PointF(tapRect.left, tapRect.top)))
+                    .add(fromScreenLocation(new PointF(tapRect.right, tapRect.top)))
+                    .add(fromScreenLocation(new PointF(tapRect.right, tapRect.bottom))));
 
             List<Marker> nearbyMarkers = getMarkersInBounds(builder.build());
             long newSelectedMarkerId = -1;
