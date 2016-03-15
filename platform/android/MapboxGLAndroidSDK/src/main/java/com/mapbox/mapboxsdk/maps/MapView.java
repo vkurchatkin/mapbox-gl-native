@@ -1513,7 +1513,7 @@ public class MapView extends FrameLayout {
             }
 
             trackGestureEvent(MapboxEvent.GESTURE_DOUBLETAP, e.getX(), e.getY());
-
+            invalidateCameraPosition();
             return true;
         }
 
