@@ -34,6 +34,8 @@ public:
     void redoPlacement(PlacementConfig config, const std::function<void()>&) override;
     void redoPlacement(const std::function<void()>&) override;
 
+    bool hasData() const override;
+
     void cancel() override;
 
 private:
