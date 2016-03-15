@@ -75,9 +75,9 @@ bool Painter::needsAnimation() const {
     return frameHistory.needsAnimation(data.getDefaultFadeDuration());
 }
 
-void Painter::prepareTile(const Tile& tile) {
-    const GLint ref = (GLint)tile.clip.reference.to_ulong();
-    const GLuint mask = (GLuint)tile.clip.mask.to_ulong();
+void Painter::setClipping(const ClipID& clip) {
+    const GLint ref = (GLint)clip.reference.to_ulong();
+    const GLuint mask = (GLuint)clip.mask.to_ulong();
     config.stencilFunc = { GL_EQUAL, ref, mask };
 }
 
@@ -250,7 +250,9 @@ void Painter::renderPass(RenderPass pass_,
             config.setDirty();
         } else {
             MBGL_DEBUG_GROUP(layer.id + " - " + std::string(item.tile->id));
-            prepareTile(*item.tile);
+            if (item.bucket->needsClipping()) {
+                setClipping(item.tile->clip);
+            }
             item.bucket->render(*this, layer, item.tile->id, item.tile->matrix);
         }
     }
