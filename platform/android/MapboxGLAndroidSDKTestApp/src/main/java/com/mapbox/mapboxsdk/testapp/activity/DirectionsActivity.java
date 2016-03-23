@@ -1,5 +1,6 @@
 package com.mapbox.mapboxsdk.testapp.activity;
 
+import android.app.FragmentTransaction;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -8,6 +9,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 
 import com.mapbox.directions.DirectionsCriteria;
 import com.mapbox.directions.MapboxDirections;
@@ -18,8 +21,11 @@ import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.annotations.PolylineOptions;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.constants.Style;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.maps.MapFragment;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
+import com.mapbox.mapboxsdk.maps.MapboxMapOptions;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.testapp.R;
 import com.mapbox.mapboxsdk.testapp.utils.ApiAccess;
@@ -31,12 +37,17 @@ import retrofit.Callback;
 import retrofit.Response;
 import retrofit.Retrofit;
 
-public class DirectionsActivity extends AppCompatActivity {
+public class DirectionsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private final static String LOG_TAG = "DirectionsActivity";
 
-    private MapView mMapView;
-    private MapboxMap mMapboxMap;
+    // Dupont Circle (Washington, DC)
+    private final static Waypoint WAYPOINT_ORIGIN = new Waypoint(-77.04341, 38.90962);
+
+    // The White House (Washington, DC)
+    private final static Waypoint WAYPOINT_DESTINATION = new Waypoint(-77.0365, 38.8977);
+
+    private MapboxMap mapboxMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,47 +63,64 @@ public class DirectionsActivity extends AppCompatActivity {
             actionBar.setDisplayShowHomeEnabled(true);
         }
 
-        mMapView = (MapView) findViewById(R.id.mapView);
-        mMapView.setAccessToken(ApiAccess.getToken(this));
-        mMapView.onCreate(savedInstanceState);
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(@NonNull MapboxMap mapboxMap) {
-                mMapboxMap = mapboxMap;
-                loadRoute();
-            }
-        });
+        MapFragment mapFragment;
+        if (savedInstanceState == null) {
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+
+            MapboxMapOptions options = new MapboxMapOptions();
+            options.styleUrl(Style.EMERALD);
+            options.accessToken(getString(R.string.mapbox_access_token));
+            options.compassEnabled(false);
+            options.attributionEnabled(false);
+            options.logoEnabled(false);
+
+            // Calculate center camera target
+            LatLng centroid = new LatLng(
+                    (WAYPOINT_ORIGIN.getLatitude() + WAYPOINT_DESTINATION.getLatitude()) / 2,
+                    (WAYPOINT_ORIGIN.getLongitude() + WAYPOINT_DESTINATION.getLongitude()) / 2);
+
+            // Inital camera position
+            options.camera(new CameraPosition.Builder()
+                    .target(centroid)
+                    .zoom(14)
+                    .build());
+
+//            options.minZoom(1);
+//            options.maxZoom(18);
+
+            mapFragment = MapFragment.newInstance(options);
+
+            transaction.add(R.id.fragmentContainer, mapFragment, LOG_TAG);
+            transaction.commit();
+        } else {
+            mapFragment = (MapFragment) getFragmentManager().findFragmentByTag(LOG_TAG);
+        }
+
+        mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    public void onMapReady(@NonNull MapboxMap mapboxMap) {
+        this.mapboxMap = mapboxMap;
+        loadRoute();
     }
 
     private void loadRoute() {
-        // Dupont Circle (Washington, DC)
-        Waypoint origin = new Waypoint(-77.04341, 38.90962);
-
-        // The White House (Washington, DC)
-        Waypoint destination = new Waypoint(-77.0365, 38.8977);
-
-        // Set map at centroid
-        LatLng centroid = new LatLng(
-                (origin.getLatitude() + destination.getLatitude()) / 2,
-                (origin.getLongitude() + destination.getLongitude()) / 2);
-
-        mMapboxMap.moveCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder()
-                .target(centroid)
-                .zoom(14)
-                .build()));
-
         // Add origin and destination to the map
-        mMapboxMap.addMarker(new MarkerOptions()
-                .position(new LatLng(origin.getLatitude(), origin.getLongitude()))
+        mapboxMap.addMarker(new MarkerOptions()
+                .position(new LatLng(WAYPOINT_ORIGIN.getLatitude()
+                        , WAYPOINT_ORIGIN.getLongitude()))
                 .title("Origin")
                 .snippet("Dupont Circle"));
-        mMapboxMap.addMarker(new MarkerOptions()
-                .position(new LatLng(destination.getLatitude(), destination.getLongitude()))
+
+        mapboxMap.addMarker(new MarkerOptions()
+                .position(new LatLng(WAYPOINT_DESTINATION.getLatitude(),
+                        WAYPOINT_DESTINATION.getLongitude()))
                 .title("Destination")
                 .snippet("The White House"));
 
         // Get route from API
-        getRoute(origin, destination);
+        getRoute(WAYPOINT_ORIGIN, WAYPOINT_DESTINATION);
     }
 
     private void getRoute(Waypoint origin, Waypoint destination) {
@@ -135,52 +163,10 @@ public class DirectionsActivity extends AppCompatActivity {
         }
 
         // Draw Points on MapView
-        mMapboxMap.addPolyline(new PolylineOptions()
+        mapboxMap.addPolyline(new PolylineOptions()
                 .add(point)
                 .color(Color.parseColor("#3887be"))
                 .width(5));
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        mMapView.onStart();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        mMapView.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mMapView.onPause();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        mMapView.onStop();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        mMapView.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mMapView.onDestroy();
-    }
-
-    @Override
-    public void onLowMemory() {
-        super.onLowMemory();
-        mMapView.onLowMemory();
     }
 
     @Override

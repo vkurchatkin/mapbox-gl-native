@@ -390,7 +390,9 @@ public class MapView extends FrameLayout {
                     reloadIcons();
                     reloadMarkers();
                     adjustTopOffsetPixels();
+                    Log.e(MapboxConstants.TAG,"DID FINISH LOADING");
                     if (mInitialLoad) {
+                        Log.e(MapboxConstants.TAG,"DID FINISH LOADING CALLBACKING");
                         mInitialLoad = false;
                         if (mOnMapReadyCallbackList.size() > 0) {
                             Iterator<OnMapReadyCallback> iterator = mOnMapReadyCallbackList.iterator();
@@ -2279,6 +2281,7 @@ public class MapView extends FrameLayout {
     // Called via JNI from NativeMapView
     // Forward to any listeners
     protected void onMapChanged(int mapChange) {
+        Log.v("MAPBOXCHANGE","CHANGE _"+mapChange);
         if (mOnMapChangedListener != null) {
             OnMapChangedListener listener;
             final Iterator<OnMapChangedListener> iterator = mOnMapChangedListener.iterator();
