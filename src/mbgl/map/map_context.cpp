@@ -180,6 +180,7 @@ void MapContext::update() {
     style->update(transformState, frameData.timePoint, *texturePool);
 
     if (data.mode == MapMode::Continuous) {
+        data.loading = true;
         asyncInvalidate.send();
     } else {
         // Update time point so style sources can check they are loaded.
